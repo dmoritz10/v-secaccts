@@ -1,0 +1,29 @@
+{
+  "name": "v-secaccts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "date-fns": "^4.1.0",
+    "firebase": "^11.9.1",
+    "vue": "^3.5.17",
+    "vue-router": "^4.5.1",
+    "vuetify": "^3.8.11"
+  },
+  "devDependencies": {
+    "@mdi/font": "^7.4.47",
+    "@vitejs/plugin-vue": "^6.0.0",
+    "deepmerge": "^4.3.1",
+    "sass": "^1.89.2",
+    "sass-loader": "^16.0.5",
+    "vite": "^7.0.0",
+    "vite-plugin-pwa": "^1.0.1",
+    "vite-plugin-vue-devtools": "^7.7.7",
+    "vuetify": "^3.8.11"
+  }
+}
