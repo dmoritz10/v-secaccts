@@ -12,16 +12,13 @@
           rounded
         >
           <v-row class="align-center justify-center">
-            <h1 class="subtitle-1 grey--text text-center">Secure Accounts</h1>
+            <h1 class="subtitle-1 grey--text text-center">
+              {{ categoryName }}
+            </h1>
           </v-row>
           <v-row>
-            <v-col class="text-center">
-              <h2 class="text-success">{{ nbrCats }}</h2>
-              <p class="subtitle-1 grey--text text-center">Categories</p>
-            </v-col>
-
             <v-col class="text-center" col="3">
-              <h2 class="text-success">{{ nbrAccts }}</h2>
+              <h2 class="text-success">{{ nbrFilteredAccts }}</h2>
               <p class="subtitle-1 grey--text text-center">Accounts</p>
             </v-col>
           </v-row>
@@ -33,8 +30,8 @@
     <v-row class="mx-0 px-0 my-0 pb-1" style="background-color: #f9f9f9">
       <v-col cols="12" class="pb-0">
         <v-text-field
-          v-model="state.categories.searchQuery"
-          label="Search Categories or Account Providers"
+          v-model="state.accounts.searchQuery"
+          label="Search Providers"
           prepend-inner-icon="mdi-magnify"
           clearable
           class="search-field border rounded"
@@ -52,38 +49,27 @@
       class="mx-0 px-0 mt-0 mb-3 pt-2"
       style="background-color: #f9f9f9"
     >
-      <v-col v-for="cat in filteredCats" :key="cat.id" cols="12">
+      <v-col v-for="acct in filteredAccts" :key="acct.id" cols="12">
         <v-card
           elevation="2"
           class="d-flex align-center pa-2 mx-3"
           color="amber-lighten-4"
           :class="{
-            'sheets-focus': state.categories.selectedCardId === cat.id,
+            'sheets-focus': state.accounts.selectedCardId === acct.id,
           }"
-          @click="goToAccounts(cat.id, cat.name)"
+          @click="selectAccountCard(acct.id)"
         >
           <v-card-title class="text-h6 wrap-card-title">
-            {{ cat.name }}
+            {{ acct.provider }}
           </v-card-title>
           <v-spacer></v-spacer>
           <v-btn
-            flat
-            outlined
-            :class="[
-              'crypt-btn',
-              'close-btn',
-              cat.enc ? 'bg-red-lighten-2' : 'bg-green-lighten-2',
-            ]"
-            @click="cryptCat(cat)"
-          >
-            {{ cat.enc ? "decrypt" : "encrypt" }} </v-btn
-          ><v-btn
             icon
             small
             flat
             outlined
             class="transparent-btn close-btn"
-            @click.stop="openCategoryDialog(cat)"
+            @click.stop="openAccountDialog(acct)"
           >
             <v-icon>mdi-pencil-outline</v-icon>
           </v-btn>
@@ -92,7 +78,7 @@
             small
             outlined
             class="transparent-btn close-btn"
-            @click.stop="deleteCategory(cat.id)"
+            @click.stop="deleteAccount(acct.id)"
           >
             <v-icon>mdi-delete-outline</v-icon>
           </v-btn>
@@ -112,29 +98,29 @@
       left: 50%;
       transform: translateX(-50%);
     "
-    @click="openCategoryDialog"
+    @click="openAccountDialog"
   >
     <v-icon>mdi-plus</v-icon>
   </v-btn>
 
-  <!-- Category Dialog -->
-  <v-dialog v-model="state.categories.dialog" max-width="500">
+  <!-- Accoiunt Dialog -->
+  <v-dialog v-model="state.accounts.dialog" max-width="500">
     <v-card>
       <v-card-title>{{
-        state.categories.formData.id ? "Edit Category" : "Add Category"
+        state.accounts.formData.id ? "Edit Account" : "Add Account"
       }}</v-card-title>
       <v-card-text>
         <v-text-field
-          v-model="state.categories.formData.name"
-          label="Category Name"
+          v-model="state.accounts.formData.provider"
+          label="Account Name"
           variant="outlined"
           required
         ></v-text-field>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="primary" @click="saveCategory">Save</v-btn>
-        <v-btn color="error" @click="closeCategoryDialog">Cancel</v-btn>
+        <v-btn color="primary" @click="saveAccount">Save</v-btn>
+        <v-btn color="error" @click="closeAccountDialog">Cancel</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -143,26 +129,18 @@
 <script setup>
 import { useDB } from "@/composables/useDB";
 
+import { useRoute } from "vue-router";
+const route = useRoute();
+const categoryName = route.params.categoryName;
+
 const {
   state,
-  filteredCats,
-  nbrCats,
-  nbrAccts,
-  goToAccounts,
-  openCategoryDialog,
-  closeCategoryDialog,
-  deleteCategory,
-  saveCategory,
-  selectCategoryCard,
+  filteredAccts,
+  nbrFilteredAccts,
+  openAccountDialog,
+  closeAccountDialog,
+  deleteAccount,
+  saveAccount,
+  selectAccountCard,
 } = useDB();
 </script>
-
-<style scoped>
-.crypt-btn {
-  font-size: 12px !important; /* Smaller text for account buttons */
-  text-transform: lowercase !important; /* Lowercase text */
-  font-weight: bold !important; /* Bold text */
-  padding-left: 4px !important; /* Reduced left padding */
-  padding-right: 4px !important; /* Reduced right padding */
-}
-</style>

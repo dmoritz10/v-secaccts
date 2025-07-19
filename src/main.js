@@ -1,7 +1,8 @@
 import { createApp } from "vue";
 import App from "./App.vue";
-import vuetify from "./plugins/vuetify";
 import router from "./router";
+
+import vuetify from "./plugins/vuetify";
 
 // Suppress Workbox logs in development
 if (import.meta.env.MODE === "development") {
