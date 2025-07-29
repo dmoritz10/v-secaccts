@@ -59,12 +59,16 @@ import { currUser } from "../global";
 import { encryptMessage, decryptMessage } from "../enc";
 import router from "../router";
 
+// const usr = ref("dmoritz10");
+// const pwd = ref("Tempdm123!");
 const usr = ref("dmoritz10");
 const pwd = ref("Tempdm123!");
 const dialogLogin = ref(false);
 const msg = ref(null);
 
 onMounted(() => {
+  handleSignOut();
+
   onAuthStateChanged(auth, (user) => {
     if (user) {
       currUser.name = user.displayName;

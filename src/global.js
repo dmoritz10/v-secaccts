@@ -1,5 +1,5 @@
 import { ref } from "vue";
 import { reactive } from "vue";
 
-const currUser = {};
+const currUser = ref({});
 export { currUser };
