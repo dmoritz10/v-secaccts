@@ -2,12 +2,13 @@
   <v-dialog
     :model-value="modelValue"
     @update:model-value="$emit('update:modelValue', $event)"
-    max-width="500"
+    max-width="600"
   >
     <v-card>
-      <v-card-title>{{
-        formData.id ? "Edit Account" : "Add Account"
-      }}</v-card-title>
+      <v-card-title
+        >{{ formData.id ? "Edit Account" : "Add Account" }} for
+        {{ categoryName }}</v-card-title
+      >
       <v-card-text>
         <v-text-field
           v-model="formData.provider"
@@ -21,56 +22,25 @@
           label="Account Number"
           variant="outlined"
         ></v-text-field>
-        <v-checkbox
-          v-model="formData.autoPay"
-          label="Auto Pay"
-          :true-value="true"
-          :false-value="false"
-        ></v-checkbox>
-        <v-text-field
-          v-model="formData.categoryId"
-          label="Category ID"
-          variant="outlined"
-          :rules="[(v) => !!v || 'Category ID is required']"
-          required
-        ></v-text-field>
-        <v-checkbox
-          v-model="formData.enc"
-          label="Encrypted"
-          :true-value="true"
-          :false-value="false"
-        ></v-checkbox>
-        <v-checkbox
-          v-model="formData.favorite"
-          label="Favorite"
-          :true-value="true"
-          :false-value="false"
-        ></v-checkbox>
+        <v-checkbox v-model="formData.autoPay" label="Auto Pay"></v-checkbox>
         <v-text-field
           v-model="formData.login"
           label="Login"
           variant="outlined"
         ></v-text-field>
         <v-text-field
-          v-model="formData.loginUrl"
-          label="Login URL"
-          variant="outlined"
-          type="url"
-        ></v-text-field>
-        <v-textarea
-          v-model="formData.notes"
-          label="Notes"
-          variant="outlined"
-        ></v-textarea>
-        <v-text-field
           v-model="formData.password"
           label="Password"
           variant="outlined"
-          type="password"
         ></v-text-field>
         <v-text-field
           v-model="formData.pinNbr"
           label="PIN Number"
+          variant="outlined"
+        ></v-text-field>
+        <v-text-field
+          v-model="formData.loginUrl"
+          label="Login URL"
           variant="outlined"
         ></v-text-field>
         <v-textarea
@@ -78,11 +48,38 @@
           label="Security Q&A"
           variant="outlined"
         ></v-textarea>
+        <v-textarea
+          v-model="formData.notes"
+          label="Notes"
+          variant="outlined"
+        ></v-textarea>
+        <v-checkbox v-model="formData.favorite" label="Favorite"></v-checkbox>
+        <v-checkbox v-model="formData.enc" label="Encrypted"></v-checkbox>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="primary" @click="$emit('save')">Save</v-btn>
-        <v-btn color="error" @click="$emit('cancel')">Cancel</v-btn>
+        <v-btn
+          color="primary"
+          @click="
+            $emit('save', {
+              categoryId: formData.categoryId,
+              categoryName,
+              accountId: formData.id,
+            })
+          "
+          >Save</v-btn
+        >
+        <v-btn
+          color="error"
+          @click="
+            $emit('cancel', {
+              categoryId: formData.categoryId,
+              categoryName,
+              accountId: formData.id,
+            })
+          "
+          >Cancel</v-btn
+        >
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -99,19 +96,20 @@ defineProps({
     default: () => ({
       id: null,
       provider: "",
-      accountNbr: null,
+      accountNbr: "",
       autoPay: false,
       categoryId: "",
-      enc: false,
-      favorite: false,
-      login: null,
+      login: "",
       loginUrl: "",
       notes: "",
-      password: null,
-      pinNbr: null,
-      securityQA: null,
+      password: "",
+      pinNbr: "",
+      securityQA: "",
+      favorite: false,
+      enc: false,
     }),
   },
+  categoryName: { type: String, default: "Category" },
 });
 
 defineEmits(["update:modelValue", "save", "cancel"]);
