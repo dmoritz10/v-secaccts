@@ -1,153 +1,273 @@
 <template>
-  <v-container fluid class="h-100">
+  <v-container fluid class="h-100 ma-0 pa-0">
     <v-progress-circular
-      v-if="!categoryStore.isLoaded || !accountStore.isLoaded"
+      v-if="!categoryStore.isLoaded"
       indeterminate
       color="primary"
       class="ma-16 d-flex justify-center"
     ></v-progress-circular>
-    <template v-else-if="Array.isArray(filteredCategories)">
-      <v-row
-        class="mx-0 pa-0 py-0 pb-2"
-        :style="{ backgroundColor: '#f5f5f9' }"
+    <template v-else-if="Array.isArray(categoryStore.filteredCategories)">
+      <v-container
+        fluid
+        class="ma-0 pa-0"
+        style="height: 100%; overflow: visible"
       >
-        <v-col cols="12" class="pb-0">
-          <v-toolbar flat color="transparent">
-            <v-toolbar-title class="text-h5">Categories</v-toolbar-title>
-            <v-spacer></v-spacer>
-            <v-btn color="primary" @click="categoryStore.openCategoryDialog()">
-              <v-icon left>mdi-plus</v-icon> Add Category
-            </v-btn>
-          </v-toolbar>
-          <v-text-field
-            :model-value="categoryStore.searchQuery"
-            @update:modelValue="categoryStore.searchQuery = $event"
-            label="Search Categories"
-            prepend-inner-icon="mdi-magnify"
-            variant="outlined"
-            clearable
-            class="mb-4"
-          ></v-text-field>
-        </v-col>
-      </v-row>
-      <div class="category-stats">
-        <span
-          >{{ categoryStore.numberOfFilteredCategories }}
-          {{
-            categoryStore.numberOfFilteredCategories === 1
-              ? "Category"
-              : "Categories"
-          }}</span
+        <!-- sheet -->
+        <v-row
+          class="position-sticky top-0 mx-0 px-0 mb-2"
+          style="z-index: 20; background-color: #f9f9f9"
         >
-      </div>
-      <div
-        v-if="categoryStore.numberOfFilteredCategories === 0"
-        class="no-categories"
-      >
-        No categories found. Add one to get started!
-      </div>
-      <v-row
-        dense
-        class="mx-0 pa-0 mt-0 mb-3 pt-2"
-        v-for="cat in filteredCategories"
-        :key="cat.id"
-      >
-        <v-col cols="12" sm="6" md="4">
-          <v-card
-            :id="'category-' + cat.id"
-            @click="goToAccounts(cat)"
-            class="category-card"
-          >
-            <v-card-title class="wrap-card-title">{{
-              cat.name || "Unnamed Category"
-            }}</v-card-title>
-            <v-card-actions>
-              <v-btn
-                color="primary"
-                @click.stop="categoryStore.openCategoryDialog(cat)"
-                >Edit</v-btn
-              >
-              <v-btn
-                color="error"
-                @click.stop="categoryStore.deleteCategory(cat.id)"
-                >Delete</v-btn
-              >
-            </v-card-actions>
-          </v-card>
-        </v-col>
-      </v-row>
-    </template>
-    <div v-else>
-      <p>
-        Error: Failed to load categories. Please check your connection and try
-        again.
-      </p>
-    </div>
+          <v-col cols="12" class="pb-0 px-0">
+            <v-sheet
+              class="mx-3 px-4 pt-6 pb-3 mt-1 mb-0 border"
+              elevation="0"
+              rounded
+            >
+              <v-row class="align-center">
+                <v-col cols="1"></v-col>
+                <v-col class="text-center">
+                  <h1 class="subtitle-1 grey--text text-center">
+                    Secure Accounts
+                  </h1>
+                </v-col>
+                <!-- Sandwich / 3-dot menu -->
+                <v-col cols="1" class="d-flex justify-end">
+                  <v-menu location="bottom-end">
+                    <template #activator="{ props }">
+                      <v-btn icon v-bind="props" variant="text">
+                        <v-icon>mdi-dots-vertical</v-icon>
+                      </v-btn>
+                    </template>
 
+                    <v-list>
+                      <v-list-item @click="openChangePasswordDialog">
+                        <v-list-item-title>Change password</v-list-item-title>
+                      </v-list-item>
+                      <v-list-item @click="goToAllAccounts">
+                        <v-list-item-title>Show all Accounts</v-list-item-title>
+                      </v-list-item>
+                      <v-list-item @click="handleSignOut">
+                        <v-list-item-title>Sign out</v-list-item-title>
+                      </v-list-item>
+                    </v-list>
+                  </v-menu>
+                </v-col>
+              </v-row>
+              <v-row class="ma-0 pa-0">
+                <v-col class="text-center ma-0 pa-0">
+                  <h2 class="text-success ma-0 pa-0">
+                    {{ categoryStore.numberOfFilteredCategories }}
+                  </h2>
+                </v-col>
+              </v-row>
+            </v-sheet>
+          </v-col>
+        </v-row>
+
+        <!-- search -->
+        <v-row class="mx-0 px-0 my-0 pb-1" style="background-color: #f9f9f9">
+          <v-col cols="12" class="pb-0">
+            <v-text-field
+              :model-value="categoryStore.searchQuery"
+              @update:modelValue="categoryStore.searchQuery = $event"
+              label="Search Categories by Account Providers"
+              prepend-inner-icon="mdi-magnify"
+              clearable
+              class="search-field border rounded"
+              hide-details
+              height="20"
+              elevation="0"
+              style="background-color: white"
+            />
+          </v-col>
+        </v-row>
+
+        <!-- cards -->
+        <v-row
+          dense
+          class="mx-0 px-0 mt-0 mb-3 pt-2"
+          style="background-color: #f9f9f9"
+        >
+          <v-col
+            v-for="category in categoryStore.filteredCategories"
+            :key="category.id"
+            cols="12"
+          >
+            <v-card
+              elevation="2"
+              class="d-flex align-center pa-2 mx-3"
+              color="amber-lighten-4"
+              :id="`category-${category.id}`"
+              @click="goToCategoryAccounts(category.id)"
+            >
+              <v-card-title class="text-h6 wrap-card-title">
+                {{ category.name }}
+              </v-card-title>
+              <v-spacer></v-spacer>
+              <v-btn
+                flat
+                outlined
+                :class="[
+                  'crypt-btn',
+                  'close-btn',
+                  category.enc ? 'bg-red-lighten-2' : 'bg-green-lighten-2',
+                ]"
+                @click.stop="
+                  categoryStore.cryptCat(category, authStore.currUser.pwd)
+                "
+              >
+                {{ category.enc ? "decrypt" : "encrypt" }} </v-btn
+              ><v-btn
+                icon
+                small
+                flat
+                outlined
+                class="transparent-btn close-btn py-1"
+                @click.stop="categoryStore.openCategoryDialog(category)"
+              >
+                <v-icon>mdi-pencil-outline</v-icon>
+              </v-btn>
+              <v-btn
+                v-if="authStore.currUser.admin"
+                icon
+                small
+                outlined
+                class="transparent-btn close-btn"
+                @click.stop="categoryStore.deleteCategory(category.id)"
+              >
+                <v-icon>mdi-delete-outline</v-icon>
+              </v-btn>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-container>
+
+      <!-- add button -->
+      <v-btn
+        icon
+        fab
+        class="add-btn align-center justify-center"
+        style="
+          position: fixed;
+          bottom: 16px;
+          left: 50%;
+          transform: translateX(-50%);
+        "
+        @click="categoryStore.openCategoryDialog()"
+      >
+        <v-icon>mdi-plus</v-icon>
+      </v-btn>
+    </template>
     <!-- Category Dialog -->
     <CategoryDialog
       v-model="categoryStore.dialog"
-      :form-data="categoryStore.formData"
-      @save="handleSave"
-      @cancel="handleCancel"
+      :form-data="categoryStore.state.formData"
+      @save="categoryStore.saveCategory"
+      @cancel="categoryStore.closeCategoryDialog"
     />
+    <!-- Change password Dialog -->
+    <template>
+      <v-btn @click="openChangePasswordDialog">Change Password</v-btn>
+      <PasswordChangeDialog ref="pwdDialog" />
+    </template>
   </v-container>
 </template>
 
 <script setup>
-import { computed, watch, nextTick, onMounted } from "vue";
+import { computed, ref, watch, nextTick, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useCategoryStore } from "@/stores/category";
 import { useAccountStore } from "@/stores/account";
+import { useAuthStore } from "@/stores/auth";
+import { auth } from "../firebase";
+import { signOut } from "firebase/auth";
 import CategoryDialog from "@/components/CategoryDialog.vue";
+import PasswordChangeDialog from "@/components/PasswordChangeDialog.vue";
+import {
+  toast,
+  alertDialog,
+  confirmDialog,
+  blockScreen,
+  unblockScreen,
+} from "@/ui/dialogState.js";
 
 const router = useRouter();
 const route = useRoute();
 const categoryStore = useCategoryStore();
 const accountStore = useAccountStore();
+const authStore = useAuthStore();
+const pwdDialog = ref(null);
 
-const filteredCategories = computed(() => {
-  const categories = categoryStore.filteredCategories;
-  console.log(
-    "Categories.vue filteredCategories:",
-    categories,
-    "dialog:",
-    categoryStore.dialog
-  );
-  return categories;
+function openChangePasswordDialog() {
+  pwdDialog.value.open();
+}
+
+onMounted(async () => {
+  console.log("Categories.vue mounted, isLoaded:", categoryStore.isLoaded);
+  try {
+    await categoryStore.subscribeToCategories();
+    console.log("Categories.vue subscribed, isLoaded:", categoryStore.isLoaded);
+  } catch (error) {
+    console.error("Categories.vue subscribeToCategories failed:", error);
+    alertDialog("Categories.vue subscribeToCategories failed", error);
+  }
+  try {
+    await accountStore.subscribeToAccounts();
+    console.log("accountStore subscribed, isLoaded:", accountStore.isLoaded);
+  } catch (error) {
+    console.error("accountStore subscribeToAccounts failed:", error);
+    alertDialog("accountStore subscribeToAccounts failed", error);
+  }
+  console.log("catefories.vue. onMounted complete");
 });
 
 watch(
-  () => categoryStore.searchQuery,
+  () => ({ ...route.query, ts: route.query.ts }),
   (newQuery) => {
-    console.log("Categories.vue searchQuery changed:", newQuery);
+    if (newQuery.scrollTo) {
+      nextTick(() => {
+        scrollToCategory(newQuery.scrollTo);
+      });
+    } else {
+      console.log(
+        "Categories.vue watch triggered, no scrollTo, initial load or no scroll needed"
+      );
+    }
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 );
 
-onMounted(async () => {
-  try {
-    console.log("Categories.vue mounted, fetching data...");
-    await Promise.all([
-      categoryStore.fetchCategories(),
-      categoryStore.subscribeToCategories(),
-      accountStore.fetchAccounts(),
-      accountStore.subscribeToAccounts(),
-    ]);
-    console.log(
-      "Categories.vue initial fetch complete, categoryStore.isLoaded:",
-      categoryStore.isLoaded,
-      "accountStore.isLoaded:",
-      accountStore.isLoaded,
-      "dialog:",
-      categoryStore.dialog
-    );
-  } catch (error) {
-    console.error("Categories.vue onMounted failed:", error);
-    categoryStore.state.isLoaded = false;
-    accountStore.state.isLoaded = false;
-  }
-});
+// Navigate to a specific category
+const goToCategoryAccounts = (catId) => {
+  // Set categoryId in the store
+
+  accountStore.selectedCatId = catId;
+
+  // Reset filters so no previous filter is applied
+  accountStore.setFilters([]);
+
+  // Navigate to Accounts.vue
+  router.push({
+    path: `/accounts`,
+    query: {
+      id: catId,
+      name: categoryStore.categoryNameFor(catId),
+      ts: Date.now(),
+    },
+  });
+};
+
+// Navigate to All Accounts
+const goToAllAccounts = () => {
+  // Clear categoryId in the store to show all accounts
+  accountStore.selectedCatId = "";
+
+  // Reset filters
+  accountStore.setFilters([]);
+
+  // Navigate to Accounts.vue
+  router.push("/accounts");
+};
 
 const scrollToCategory = (scrollTo) => {
   if (scrollTo && typeof scrollTo === "string") {
@@ -165,74 +285,41 @@ const scrollToCategory = (scrollTo) => {
           inline: "nearest",
         });
         element.classList.add("sheets-focus");
-        console.log(`Scrolled to category: ${scrollTo}`);
+        console.log(`Categories.vue scrolled to category: ${scrollTo}`);
       } else {
-        console.warn(`Category element not found: category-${scrollTo}`);
+        console.warn(
+          `Categories.vue category element not found: category-${scrollTo}`
+        );
       }
     });
-  }
-};
-
-watch(
-  () => ({ ...route.query, ts: route.query.ts }),
-  (newQuery) => {
-    nextTick(() => {
-      console.log(
-        "Categories.vue watch triggered, scrollTo:",
-        newQuery.scrollTo,
-        "ts:",
-        newQuery.ts
-      );
-      scrollToCategory(newQuery.scrollTo);
-    });
-  },
-  { immediate: true, deep: true }
-);
-
-const goToAccounts = (category) => {
-  router.push({
-    path: "/accounts",
-    query: { id: category.id, name: category.name, ts: Date.now() },
-  });
-};
-
-const handleSave = async (payload) => {
-  try {
-    console.log("Categories.vue handleSave, payload:", payload);
-    const categoryId = await categoryStore.saveCategory();
-    console.log("Saved category ID:", categoryId);
-    await categoryStore.fetchCategories();
-    await nextTick();
-    await nextTick();
-    categoryStore.closeCategoryDialog();
-    const targetId = payload.categoryId ? payload.categoryId : categoryId;
-    if (targetId && typeof targetId === "string") {
-      router.push({
-        path: "/categories",
-        query: { scrollTo: targetId, ts: Date.now() },
-      });
-    } else {
-      console.warn("Invalid categoryId:", targetId);
-      router.push({ path: "/categories", query: { ts: Date.now() } });
-    }
-  } catch (error) {
-    console.error("Categories.vue handleSave failed:", error);
-  }
-};
-
-const handleCancel = (payload) => {
-  console.log("Categories.vue handleCancel, payload:", payload);
-  const categoryId = payload.categoryId;
-  categoryStore.closeCategoryDialog();
-  if (categoryId && typeof categoryId === "string") {
-    router.push({
-      path: "/categories",
-      query: { scrollTo: categoryId, ts: Date.now() },
-    });
   } else {
-    router.push({ path: "/categories", query: { ts: Date.now() } });
+    console.log(
+      "Categories.vue scrollToCategory, no scrollTo provided:",
+      scrollTo
+    );
+  }
+};
+
+const handleSignOut = async () => {
+  try {
+    await signOut(auth);
+    authStore.clearUser();
+    router.replace("/");
+    console.log("Sign-out successful");
+  } catch (error) {
+    console.error("Sign-out error:", error);
+    authStore.clearUser();
+    router.replace("/");
   }
 };
 </script>
 
-<style scoped src="@/assets/index.css"></style>
+<style scoped>
+.crypt-btn {
+  font-size: 12px !important; /* Smaller text for account buttons */
+  text-transform: lowercase !important; /* Lowercase text */
+  font-weight: bold !important; /* Bold text */
+  padding-left: 4px !important; /* Reduced left padding */
+  padding-right: 4px !important; /* Reduced right padding */
+}
+</style>

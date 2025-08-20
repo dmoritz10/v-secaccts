@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "devf": "vite --force",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vueuse/core": "^13.6.0",
     "date-fns": "^4.1.0",
     "firebase": "^11.9.1",
     "pinia": "^3.0.3",

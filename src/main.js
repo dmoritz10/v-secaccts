@@ -1,23 +1,30 @@
 import { createApp } from "vue";
-import { createPinia } from "pinia";
 import App from "./App.vue";
 import router from "./router";
 import "vuetify/styles";
-import { createVuetify } from "vuetify";
-import * as components from "vuetify/components";
-import * as directives from "vuetify/directives";
 import "@mdi/font/css/materialdesignicons.css";
-import "@/assets/index.css";
+// import { useAuthStore } from "@/stores/auth";
+import { useAccountStore } from "@/stores/account";
+import { useCategoryStore } from "@/stores/category";
 
-const vuetify = createVuetify({
-  components,
-  directives,
-});
-
-const pinia = createPinia();
+import { vuetify } from "./plugins/vuetify";
+import { pinia } from "@/services/pinia";
+import * as dialogs from "@/ui/dialogState.js";
 
 const app = createApp(App);
+app.use(pinia);
+
+useAccountStore();
+useCategoryStore();
+
 app.use(router);
 app.use(vuetify);
-app.use(pinia);
+// app.use(UiPlugin);
+// Make dialog helpers available globally
+app.config.globalProperties.$toast = dialogs.toast;
+app.config.globalProperties.$alert = dialogs.alertDialog;
+app.config.globalProperties.$confirm = dialogs.confirmDialog;
+app.config.globalProperties.$block = dialogs.blockScreen;
+app.config.globalProperties.$unblock = dialogs.unblockScreen;
+
 app.mount("#app");

@@ -151,7 +151,7 @@ async function decryptMessageArr(input) {
 //   return decrypted;
 // }
 
-async function encryptMessage(msg, password = currUser.pwd) {
+async function encryptMessage(msg, password) {
   if (msg === null) return null;
 
   const encoder = new TextEncoder();
@@ -207,7 +207,7 @@ async function encryptMessage(msg, password = currUser.pwd) {
   return toBase64(concatenated);
 }
 
-async function decryptMessage(ciphertextBase64, password = currUser.pwd) {
+async function decryptMessage(ciphertextBase64, password) {
   if (ciphertextBase64 === null) return null;
 
   // if (!ciphertextBase64) {

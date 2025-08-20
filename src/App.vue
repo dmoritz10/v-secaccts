@@ -3,10 +3,13 @@
     <v-main>
       <router-view :key="$route.fullPath"></router-view>
     </v-main>
+    <UiContainer />
   </v-app>
 </template>
 
-<script setup></script>
+<script setup>
+import UiContainer from "./ui/UiContainer.vue";
+</script>
 
 <style scoped>
 .grey.lighten-4 {

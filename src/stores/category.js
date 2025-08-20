@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, reactive } from "vue";
+import { computed, reactive, ref, nextTick } from "vue";
 import { db } from "@/firebase";
 import {
   collection,
@@ -9,16 +9,26 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDocs,
 } from "firebase/firestore";
 import { useAccountStore } from "./account";
+import { useAuthStore } from "./auth";
+import { encyptCat, decyptCat } from "@/services/common";
+import {
+  toast,
+  alertDialog,
+  confirmDialog,
+  blockScreen,
+  unblockScreen,
+} from "@/ui/dialogState.js";
 
 export const useCategoryStore = defineStore("category", () => {
   const accountStore = useAccountStore();
+  const authStore = useAuthStore();
 
   const state = reactive({
     items: [],
     isLoaded: false,
-    dialog: false,
     formData: {
       categoryId: null,
       name: "",
@@ -26,6 +36,10 @@ export const useCategoryStore = defineStore("category", () => {
     },
     searchQuery: "",
   });
+
+  const dialog = ref(false);
+  const unsubscribeCategories = ref(null);
+  let isInitialLoad = true;
 
   const isLoaded = computed(() => state.isLoaded);
   const searchQuery = computed({
@@ -36,24 +50,20 @@ export const useCategoryStore = defineStore("category", () => {
     },
   });
   const numberOfFilteredCategories = computed(
-    () => filteredCategories.value.length
+    () => filteredCategories.value?.length || 0
   );
 
   const filteredCategories = computed(() => {
-    console.log(
-      "Computing filteredCategories, accountStore.isLoaded:",
-      accountStore.isLoaded,
-      "accountStore.items:",
-      accountStore.items.length,
-      "searchQuery:",
-      state.searchQuery
-    );
     const query = state.searchQuery
       ? state.searchQuery.toLowerCase().trim()
       : "";
-    if (!query) {
+    if (
+      !query ||
+      !accountStore.isLoaded ||
+      !Array.isArray(accountStore.state.items)
+    ) {
       console.log(
-        "Empty search query, returning all categories:",
+        "Empty query or accounts not loaded, returning all categories:",
         state.items.length
       );
       return state.items
@@ -61,78 +71,100 @@ export const useCategoryStore = defineStore("category", () => {
         .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     }
 
-    const filtered = state.items
-      .filter((cat) => {
-        const hasMatchingAccount = accountStore.items.some((account) => {
-          const matches =
-            account.categoryId === cat.id &&
-            account.provider?.toLowerCase().includes(query);
-          console.log(
-            `Account ${account.id} (provider: ${account.provider}, categoryId: ${account.categoryId}) matches query "${query}":`,
-            matches
-          );
-          return matches;
-        });
-        console.log(
-          `Category ${cat.id} (${cat.name}): hasMatchingAccount=`,
-          hasMatchingAccount
-        );
-        return hasMatchingAccount;
-      })
-      .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    const filtered = state.items.filter((cat) => {
+      const hasMatchingAccount = accountStore.state.items.some((account) => {
+        const matches =
+          account.categoryId === cat.id &&
+          account.provider?.toLowerCase().includes(query);
+        return matches;
+      });
+      console.log(
+        `Category ${cat.id} (${cat.name}): hasMatchingAccount=`,
+        hasMatchingAccount
+      );
+      return hasMatchingAccount;
+    });
 
     console.log("Filtered categories:", filtered.length);
-    return filtered;
+    return filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   });
 
-  const fetchCategories = async () => {
+  const subscribeToCategories = async () => {
+    if (unsubscribeCategories.value) {
+      console.log("Categories subscription already exists, skipping");
+      return;
+    }
+    if (state.isLoaded) {
+      console.log("Categories already loaded, skipping subscription");
+      return;
+    }
     try {
-      console.log("Fetching categories...");
+      console.log("Loading initial categories...");
       const q = query(collection(db, "categories"));
-      const snapshot = await new Promise((resolve) => {
-        onSnapshot(q, (snap) => resolve(snap));
-      });
+      const snapshot = await getDocs(q);
       state.items = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
+      state.items.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
       state.isLoaded = true;
-      console.log("Categories fetched:", state.items);
+      console.log("Initial categories loaded:", state.items.length);
+
+      console.log("Subscribing to categories for real-time updates...");
+      unsubscribeCategories.value = onSnapshot(q, (snapshot) => {
+        if (isInitialLoad) {
+          console.log("Skipping initial onSnapshot processing");
+          isInitialLoad = false;
+          return;
+        }
+        console.log("Processing real-time category updates...");
+        const updates = [];
+        snapshot.docChanges().forEach((change) => {
+          const data = { id: change.doc.id, ...change.doc.data() };
+          if (change.type === "added" || change.type === "modified") {
+            updates.push({
+              index: state.items.findIndex((item) => item.id === change.doc.id),
+              data,
+            });
+          } else if (change.type === "removed") {
+            updates.push({ removeId: change.doc.id });
+          }
+        });
+        updates.forEach(({ index, data, removeId }) => {
+          if (removeId) {
+            state.items = state.items.filter((item) => item.id !== removeId);
+          } else if (index === -1) {
+            state.items.push(data);
+          } else {
+            state.items[index] = data;
+          }
+        });
+        state.items.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+        console.log("Categories updated via subscription:", state.items.length);
+      });
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      console.error("Error subscribing to categories:", error);
       state.isLoaded = false;
       throw error;
     }
   };
 
-  const subscribeToCategories = async () => {
-    try {
-      console.log("Subscribing to categories...");
-      const q = query(collection(db, "categories"));
-      onSnapshot(q, (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-          if (change.type === "added" || change.type === "modified") {
-            const index = state.items.findIndex(
-              (item) => item.id === change.doc.id
-            );
-            const data = { id: change.doc.id, ...change.doc.data() };
-            if (index === -1) {
-              state.items.push(data);
-            } else {
-              state.items[index] = data;
-            }
-          } else if (change.type === "removed") {
-            state.items = state.items.filter(
-              (item) => item.id !== change.doc.id
-            );
-          }
-        });
-        state.items.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
-        console.log("Categories updated via subscription:", state.items);
-      });
-    } catch (error) {
-      console.error("Error subscribing to categories:", error);
+  const unsubscribeFromCategories = () => {
+    if (unsubscribeCategories.value) {
+      console.log("Unsubscribing from categories...");
+      unsubscribeCategories.value();
+      unsubscribeCategories.value = null;
+      state.isLoaded = false;
+      state.items = [];
+      isInitialLoad = true;
     }
+  };
+
+  const categoryNameFor = (categoryId) => {
+    console.log("categoryNameFor", categoryId);
+    const category = state.items.find((cat) => cat.id === categoryId);
+    console.log("categoryNameFor", categoryId, category, state.items);
+    return category ? category.name : "N/A";
   };
 
   const saveCategory = async () => {
@@ -150,10 +182,13 @@ export const useCategoryStore = defineStore("category", () => {
         docRef = await addDoc(collection(db, "categories"), { name, enc });
         console.log("Category added:", docRef.id);
       }
+      await nextTick();
+      closeCategoryDialog();
       state.formData = { categoryId: null, name: "", enc: false };
       return docRef.id;
     } catch (error) {
       console.error("Error saving category:", error);
+      alertDialog("Error saving category", error);
       throw error;
     }
   };
@@ -165,12 +200,12 @@ export const useCategoryStore = defineStore("category", () => {
       console.log("Category deleted:", categoryId);
     } catch (error) {
       console.error("Error deleting category:", error);
-      throw error;
+      alertDialog("Error deleting category", error);
     }
   };
 
   const openCategoryDialog = (category = null) => {
-    state.dialog = true;
+    dialog.value = true;
     state.formData = category
       ? { categoryId: category.id, name: category.name, enc: category.enc }
       : { categoryId: null, name: "", enc: false };
@@ -178,28 +213,32 @@ export const useCategoryStore = defineStore("category", () => {
   };
 
   const closeCategoryDialog = () => {
-    state.dialog = false;
+    dialog.value = false;
     state.formData = { categoryId: null, name: "", enc: false };
     console.log("Category dialog closed");
+  };
+
+  const cryptCat = async (cat, pwd) => {
+    console.log("cryptCat", cat.enc, pwd);
+    if (cat.enc) {
+      await decyptCat(cat, pwd);
+    } else await encyptCat(cat, pwd);
   };
 
   return {
     state,
     isLoaded,
-    dialog: computed({
-      get: () => state.dialog,
-      set: (value) => {
-        state.dialog = value;
-      },
-    }),
+    dialog,
     searchQuery,
     filteredCategories,
     numberOfFilteredCategories,
-    fetchCategories,
     subscribeToCategories,
+    unsubscribeFromCategories,
     saveCategory,
     deleteCategory,
     openCategoryDialog,
     closeCategoryDialog,
+    categoryNameFor,
+    cryptCat,
   };
 });

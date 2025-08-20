@@ -10,30 +10,40 @@
         {{ formData.categoryId ? "Edit Category" : "Add Category" }}
       </v-card-title>
       <v-card-text>
-        <v-text-field
-          v-model="formData.name"
-          label="Category Name"
-          required
-          variant="outlined"
-          :rules="[(v) => !!v || 'Category name is required']"
-        ></v-text-field>
-        <v-checkbox
-          v-model="formData.enc"
-          label="Encrypted"
-          color="primary"
-        ></v-checkbox>
+        <v-form ref="editForm">
+          <v-text-field
+            v-model="formData.name"
+            label="Category Name"
+            required
+            variant="outlined"
+            :rules="[(v) => !!v || 'Category name is required']"
+          ></v-text-field>
+        </v-form>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn color="primary" @click="$emit('cancel', formData)">Cancel</v-btn>
-        <v-btn color="primary" @click="$emit('save', formData)">Save</v-btn>
+        <v-btn color="primary" @click="saveEdit(formData)">Save</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 
 <script setup>
-defineProps({
+import { ref } from "vue";
+
+const editForm = ref(null);
+
+async function saveEdit($event) {
+  const { valid } = await editForm.value?.validate();
+  console.log(valid);
+
+  if (valid) {
+    console.log("valid");
+    emit("save", props.formData);
+  }
+}
+const props = defineProps({
   modelValue: {
     type: Boolean,
     required: true,
@@ -44,5 +54,5 @@ defineProps({
   },
 });
 
-defineEmits(["update:modelValue", "save", "cancel"]);
+const emit = defineEmits(["update:modelValue", "save", "cancel"]);
 </script>

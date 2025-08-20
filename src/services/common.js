@@ -1,7 +1,7 @@
-import { currUser } from "./global";
-import { db } from "./firebase";
+import { db } from "@/firebase";
 import {
   collection,
+  doc,
   query,
   getDocs,
   where,
@@ -9,6 +9,44 @@ import {
   writeBatch,
   orderBy,
 } from "firebase/firestore";
+
+import {
+  toast,
+  alertDialog,
+  confirmDialog,
+  blockScreen,
+  unblockScreen,
+} from "@/ui/dialogState.js";
+
+import { encryptMessage, decryptMessage } from "@/services/enc";
+
+export const acctEncFlds = [
+  "accountNbr",
+  "autoPay",
+  "login",
+  "loginUrl",
+  "notes",
+  "password",
+  "pinNbr",
+  "securityQA",
+  "lastChange",
+];
+
+export const acctDBFlds = [
+  "provider",
+  "categoryId",
+  "enc",
+  "favorite",
+  "accountNbr",
+  "autoPay",
+  "login",
+  "loginUrl",
+  "notes",
+  "password",
+  "pinNbr",
+  "securityQA",
+  "lastChange",
+];
 
 function clearUser(usr) {
   Object.keys(usr).forEach((key) => {
@@ -65,6 +103,8 @@ async function getOption(keyValue) {
     return optionDoc.value;
   } catch (error) {
     console.log("getOptions error: ", error);
+    alertDialog("getOptions error", error);
+
     return null;
   }
 }
@@ -87,39 +127,38 @@ async function updateOption(key, val) {
     const updateRef = doc(db, "options", optionId);
     await updateDoc(updateRef, { value: strVal });
   } catch (error) {
+    alertDialog("Error updating Options", error);
     return null;
   }
 }
 
-async function encyptCat(cat, pwd = currUser.pwd, called = false) {
+async function encyptCat(cat, pwd) {
   console.log("encryptCat", pwd);
-  console.time("encryptCat");
+  // console.time("encryptCat");
 
-  if (cat.enc) {
-    toast(`Category ${cat.name} is already encrypted`, 0);
-    return;
-  }
-
-  if (!called) modal(true);
+  blockScreen();
 
   const ref = doc(db, "categories", cat.id);
   const col = collection(db, "accounts");
-  const q = query(col, where("categoryId", "==", ref));
+  const q = query(col, where("categoryId", "==", cat.id));
   const getAccts = await getDocs(q);
-
   let accts = getAccts.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   const decAccts = accts.filter((acct) => !acct.enc);
 
   if (!decAccts.length) {
-    toast(`Category ${cat.name} has no decrypted accounts`, 0);
-    if (!called) modal(false);
+    alertDialog(
+      "Encrypt Category",
+      `Category ${cat.name} has no decrypted accounts`
+    );
+    cat.enc = true;
+    unblockScreen();
     return;
   }
 
   toast(`Encrypting ${cat.name}`, 5000);
 
-  let encArr = await encryptAccts(decAccts);
+  let encArr = await encryptAccts(decAccts, pwd);
 
   const bUpd = await updateAccts(encArr, true, true);
 
@@ -127,67 +166,61 @@ async function encyptCat(cat, pwd = currUser.pwd, called = false) {
 
   toast("Encryption complete", 0);
 
-  if (!called) modal(false);
-
-  await loadAccounts();
+  unblockScreen();
 
   console.log("encryptCat:", accts.length);
   console.timeEnd("encryptCat");
 }
 
-async function decyptCat(cat, pwd = currUser.pwd, called = false) {
-  console.time("decryptCat");
-  console.log("decryptCat");
-
-  if (!cat.enc) {
-    toast(`Category ${cat.name} is already decrypted`, 0);
-    return;
-  }
-
-  const confirmOK = await confirm(
-    "Warning !  Decrypting sheet can expose passwords and other sensitive data to others with access to your account."
+async function decyptCat(cat, pwd) {
+  // console.time("decryptCat");
+  const confirmOK = await confirmDialog(
+    "<strong class='text-red'>Warning !",
+    "Decrypting sheet can expose passwords and other sensitive data to others with access to your account.<br><br>Do you wish to continue ?"
   );
   if (!confirmOK) {
     toast("Decryption cancelled", 0);
+    unblockScreen();
     return null;
   }
+  blockScreen("Decryption underway");
 
-  if (!called) modal(true);
   const ref = doc(db, "categories", cat.id);
   const col = collection(db, "accounts");
-  const q = query(col, where("categoryId", "==", ref));
+  const q = query(col, where("categoryId", "==", cat.id));
   const getAccts = await getDocs(q);
 
   let accts = getAccts.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   const encAccts = accts.filter((acct) => acct.enc);
-
   if (!encAccts.length) {
-    toast(`Category ${cat.name} has no encrypted accounts`, 0);
-    if (!called) modal(false);
+    alertDialog(
+      "Decrypt Category",
+      `Category ${cat.name} has no encrypted accounts`
+    );
+    cat.enc = false;
+    unblockScreen();
     return;
   }
 
   toast(`Decrypting ${cat.name}`, 0);
 
-  let encArr = await decryptAccts(encAccts);
+  let encArr = await decryptAccts(encAccts, pwd);
 
   const bUpd = await updateAccts(encArr, false, true);
 
-  toast("Decryption complete", 0);
-
-  if (!called) modal(false);
-
   await updateDoc(doc(db, "categories", cat.id), { enc: false });
 
-  await loadAccounts();
+  toast("Decryption complete", 0);
+
+  unblockScreen();
 
   console.log("decryptCat:", accts.length);
   console.timeEnd("decryptCat");
 }
 
-async function encryptAccts(accts, pwd = currUser.pwd) {
-  console.time("encryptAccts", pwd);
+async function encryptAccts(accts, pwd) {
+  console.log("encryptAccts");
 
   try {
     // Initialize result array with same structure
@@ -224,8 +257,16 @@ async function encryptAccts(accts, pwd = currUser.pwd) {
   }
 }
 
-async function decryptAccts(accts, pwd = currUser.pwd) {
-  console.time("decryptAccts");
+async function decryptAcctReactive(acct, pwd) {
+  for (const key in acct) {
+    if (acctEncFlds.indexOf(key) > -1) {
+      acct[key] = await decryptMessage(acct[key], pwd); // ✅ mutate property, reactivity preserved
+    }
+  }
+}
+
+async function decryptAccts(accts, pwd) {
+  console.log("decryptAccts");
 
   try {
     // Initialize result array with same structure
@@ -247,16 +288,16 @@ async function decryptAccts(accts, pwd = currUser.pwd) {
 
     // Process all decryption promises
     const decryptedResults = await Promise.all(decryptionPromises);
-
+    console.log("promise.all", decryptedResults);
     // Update the result array with decrypted values
     decryptedResults.forEach(({ objIndex, key, decrypted }) => {
       result[objIndex][key] = decrypted;
     });
-    console.log("decryptAccts:", decryptionPromises.length);
-    console.timeEnd("decryptAccts");
+    console.log("decryptAccts:", decryptionPromises.length, result);
 
     return result;
   } catch (error) {
+    alertDialog("Decryption failed", error);
     throw new Error(`decryption failed: ${error.message}`);
   }
 }
@@ -264,7 +305,7 @@ async function decryptAccts(accts, pwd = currUser.pwd) {
 async function updateAccts(accts, enc, disableOnSnapshot = false) {
   console.time("updateAccts");
 
-  if (disableOnSnapshot) unsubscribeAccts();
+  // if (disableOnSnapshot) unsubscribeAccts();
 
   const batch = writeBatch(db);
 
@@ -272,7 +313,6 @@ async function updateAccts(accts, enc, disableOnSnapshot = false) {
     let acct = accts[i];
     const { id, ...acctNoId } = acct; // Removes 'id' and creates a new object
     const docRef = doc(db, "accounts", acct.id);
-    // acct["lastChange"] = new Date();
     acctNoId["enc"] = enc;
     batch.update(docRef, acctNoId);
   }
@@ -288,11 +328,11 @@ async function updateAccts(accts, enc, disableOnSnapshot = false) {
     })
     .catch((error) => {
       console.error("Batch update failed: ", error);
-
+      alertDialog("Batch update failed", error);
       return error;
     });
 
-  if (disableOnSnapshot) initializeAcctsSnapshot();
+  // if (disableOnSnapshot) initializeAcctsSnapshot();
 }
 
 export {
@@ -307,4 +347,5 @@ export {
   decryptAccts,
   updateAccts,
   clearUser,
+  decryptAcctReactive,
 };

@@ -18,10 +18,10 @@
       >
         Sign in
       </v-btn>
-      <v-btn color="grey" @click="handleSignOut">
+      <!-- <v-btn color="grey" @click="handleSignOut">
         Sign Out
         <v-icon end>mdi-exit-to-app</v-icon>
-      </v-btn>
+      </v-btn> -->
     </v-row>
     <!-- Modal (v-dialog) -->
     <v-dialog class="mt-16" v-model="dialogLogin" max-width="600">
@@ -41,7 +41,7 @@
           <v-card-actions>
             <v-spacer></v-spacer>
             <v-btn color="primary" @click="submit">Submit</v-btn>
-            <v-btn color="grey" text @click="dialogLogin = false">Cancel</v-btn>
+            <v-btn color="grey" text @click="clearDialog">Cancel</v-btn>
           </v-card-actions>
         </v-form>
       </v-card>
@@ -51,117 +51,117 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { db, auth, provider } from "../firebase";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { db, auth, provider } from "@/firebase";
 import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
-import { collection, addDoc, onSnapshot } from "firebase/firestore";
-import { getOption, getUser, clearUser } from "../common";
-import { currUser } from "../global";
-import { encryptMessage, decryptMessage } from "../enc";
-import router from "../router";
+import { getOption, getUser, clearUser } from "../services/common";
+import { encryptMessage, decryptMessage } from "../services/enc";
+import {
+  toast,
+  alertDialog,
+  confirmDialog,
+  blockScreen,
+  unblockScreen,
+} from "@/ui/dialogState.js";
 
-// const usr = ref("dmoritz10");
-// const pwd = ref("Tempdm123!");
+const router = useRouter();
+const authStore = useAuthStore();
 const usr = ref("dmoritz10");
 const pwd = ref("Tempdm123!");
 const dialogLogin = ref(false);
-const msg = ref(null);
+const msg = ref("&nbsp;");
 
-onMounted(() => {
-  handleSignOut();
+onMounted(async () => {
+  console.log("Login.vue onMounted begin", authStore.currUser);
+  // Clear auth store on mount to force Firestore re-authentication
+  authStore.clearUser();
+  msg.value = "&nbsp;";
 
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      currUser.name = user.displayName;
-      currUser.email = user.email;
-      currUser.uid = user.uid;
-      dialogLogin.value = true; // Open modal on sign-in
-    } else {
-      dialogLogin.value = false;
-      clearUser(currUser);
-    }
+  // Wait for Firebase auth to initialize
+  await new Promise((resolve) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // Firebase user exists, set basic data and prompt for Firestore verification
+        authStore.setUser({
+          name: user.displayName,
+          email: user.email,
+          uid: user.uid,
+        });
+        dialogLogin.value = true;
+      } else {
+        // No Firebase user, clear store and keep dialog closed
+        authStore.clearUser();
+        dialogLogin.value = false;
+      }
+      unsubscribe();
+      resolve();
+    });
   });
-
-  //   const unsubscribe = onSnapshot(
-  //     collection(db, "categories"),
-  //     (snapshot) => {
-  //       messages.value = snapshot.docs.map((doc) => ({
-  //         id: doc.id,
-  //         ...doc.data(),
-  //       }));
-  //     }
-  //   );
+  console.log("Login.vue. onMounted complete");
 });
 
 const signIn = async () => {
-  console.log("signIn");
-
-  signInWithPopup(auth, provider)
-    .then(async (result) => {
-      console.log("signInWithPopup");
-
-      //   initializeAcctsSnapshot();
-    })
-    .catch((error) => {
-      console.log("signInWithPopup", error.message);
-    });
+  try {
+    await signInWithPopup(auth, provider);
+    dialogLogin.value = true;
+    // onAuthStateChanged handles setting user data and showing dialog
+  } catch (error) {
+    console.error("signInWithPopup error:", error.message);
+    authStore.clearUser();
+    dialogLogin.value = false;
+  }
 };
 
-const handleSignOut = async () => {
-  try {
-    await signOut(auth);
-    clearUser(currUser);
-    //   unsubscribe();
-    console.log("Sign-out successful");
-  } catch (error) {
-    clearUser(currUser);
-    console.error("Sign-out error:", error);
-  }
+const clearDialog = () => {
+  dialogLogin.value = false;
+  msg.value = "&nbsp;";
+  usr.value = "";
+  pwd.value = "";
+  authStore.clearUser();
 };
 
 async function submit() {
-  console.log("submitLogin");
   msg.value = "&nbsp;";
 
-  var rtn = await getOption("shtList");
+  const rtn = await getOption("shtList");
   if (!rtn) {
-    await alert("db open error");
-    clearUser(currUser);
-    signOut(auth);
-    window.close();
+    alertDialog("Database open error");
+    authStore.clearUser();
+    await signOut(auth);
+    return;
   }
-  var userAuth = await getUser(usr.value);
 
+  const userAuth = await getUser(usr.value.toLowerCase());
   if (!userAuth) {
     msg.value = "Invalid Login";
-    clearUser(currUser);
+    authStore.clearUser();
     return;
-  } else {
-    currUser.admin = userAuth.admin;
   }
 
-  var t = await getOption("qbf");
-
+  const t = await getOption("qbf");
+  let dx;
   try {
-    var dx = await decryptMessage(rtn, pwd.value);
+    dx = await decryptMessage(rtn, pwd.value);
   } catch (err) {
-    var dx = null;
+    dx = null;
   }
 
-  if (dx != t) {
+  if (dx !== t) {
     msg.value = "Invalid Login";
-    clearUser(currUser);
+    authStore.clearUser();
     return;
   }
 
-  currUser.userName = usr.value;
-  currUser.pwd = pwd.value;
+  // Update currUser with verified credentials
+  authStore.setUser({
+    ...authStore.currUser,
+    userName: usr.value.toLowerCase(),
+    pwd: pwd.value,
+    admin: userAuth.admin,
+  });
 
-  dialogLogin.value = false; // Close modal on sign-in
-
-  console.log("currUser", currUser);
-  // const router = useRouter();
-  // router.push("/categories");
+  dialogLogin.value = false;
   router.replace("/categories");
-  // goHome();
 }
 </script>

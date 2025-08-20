@@ -1,55 +1,46 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { auth } from "../firebase";
 import Categories from "@/views/Categories.vue";
 import Accounts from "@/views/Accounts.vue";
 import ShowAccount from "@/views/ShowAccount.vue";
 import Login from "@/views/Login.vue";
-import { auth } from "@/firebase";
+import { useAuthStore } from "@/stores/auth";
 
 const routes = [
-  {
-    path: "/categories",
-    name: "Categories",
-    component: Categories,
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/accounts",
-    name: "Accounts",
-    component: Accounts,
-    meta: { requiresAuth: true },
-  },
+  { path: "/", component: Login },
+
+  { path: "/categories", component: Categories, meta: { requiresAuth: true } },
+  { path: "/accounts", component: Accounts, meta: { requiresAuth: true } },
   {
     path: "/account/:accountId",
-    name: "ShowAccount",
     component: ShowAccount,
     meta: { requiresAuth: true },
   },
-  {
-    path: "/",
-    name: "Login",
-    component: Login,
-  },
+  { path: "/login", component: Login },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) {
-      return savedPosition; // Restore saved scroll position when navigating back
-    }
-    if (to.path === "/") {
-      return { top: 0 }; // Scroll to top for Category.vue on initial load
-    }
-    return { top: 0 }; // Default for other routes
-  },
 });
 
-router.beforeEach((to, from, next) => {
-  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
-  const isAuthenticated = auth.currentUser;
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore();
 
-  if (requiresAuth && !isAuthenticated) {
+  // Wait for Firebase auth to initialize
+  await new Promise((resolve) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      unsubscribe();
+      resolve();
+    });
+  });
+
+  const isAuthenticated =
+    authStore.currUser && authStore.currUser.userName && authStore.currUser.pwd;
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    // Clear authStore to ensure fresh state on redirect to login
+    authStore.clearUser();
     next("/");
   } else {
     next();
