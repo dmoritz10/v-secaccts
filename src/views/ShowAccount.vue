@@ -1,19 +1,13 @@
 <template>
   <v-container fluid class="h-100 ma-0 pa-0 responsive-container">
-    <div
-      v-if="!accountStore.isLoaded || !currentAccountIsLoaded"
-      class="d-flex justify-center align-center fill-height"
-    >
-      <v-progress-circular indeterminate color="primary"></v-progress-circular>
-    </div>
-    <template v-else>
+    <template v-if="accountStore.isLoaded && currentAccountIsLoaded">
       <v-row
-        class="position-sticky top-0 mx-0 px-0 mb-2 pb-2"
-        style="z-index: 20; background-color: #f9f9f9"
+        class="position-sticky top-0 mx-0 px-0 mb-2 pb-2 grey lighten-4"
+        style="z-index: 20"
       >
         <v-col cols="12" class="pb-0 px-0">
           <v-sheet
-            class="mx-3 px-4 pt-6 pb-3 mt-1 mb-0 border"
+            class="mx-3 px-4 pt-3 pb-3 mt-1 mb-0 border"
             elevation="0"
             rounded
           >
@@ -67,7 +61,7 @@
           </v-sheet>
         </v-col>
       </v-row>
-      <v-card class="account-details">
+      <v-card class="account-details grey lighten-4">
         <v-card-text class="tight-card-text">
           <v-table density="compact" class="compressed-table">
             <tbody>
@@ -317,23 +311,30 @@
           </v-table>
         </v-card-text>
       </v-card>
-      <v-footer app class="justify-space-between pa-3">
-        <v-btn
-          :disabled="!previousAccount"
+      <v-footer app class="justify-center pa-3 grey lighten-4">
+        <v-btn-group
+          class="rounded-2xl shadow-md bg-blue p-1"
+          variant="tonal"
           color="primary"
-          @click="navigateToAccount(previousAccount?.id)"
-          >Previous</v-btn
+          density="compact"
         >
-        <v-btn color="primary" @click="openUpdateDialog(currentAccount)">
-          <!-- <v-btn color="primary" @click="openAccountDialog(currentAccount)" -->
-          >Update</v-btn
-        >
-        <v-btn
-          :disabled="!nextAccount"
-          color="primary"
-          @click="navigateToAccount(nextAccount?.id)"
-          >Next</v-btn
-        >
+          <v-btn
+            :disabled="!previousAccount"
+            color="white"
+            @click="navigateToAccount(previousAccount?.id)"
+            >Prev</v-btn
+          >
+          <v-btn color="white" @click="openUpdateDialog(currentAccount)">
+            <!-- <v-btn color="primary" @click="openAccountDialog(currentAccount)" -->
+            Update</v-btn
+          >
+          <v-btn
+            :disabled="!nextAccount"
+            color="white"
+            @click="navigateToAccount(nextAccount?.id)"
+            >Next</v-btn
+          >
+        </v-btn-group>
       </v-footer>
 
       <!-- Update Dialog -->
