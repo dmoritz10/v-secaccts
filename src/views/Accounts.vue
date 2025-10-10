@@ -9,24 +9,12 @@
     <template v-else-if="Array.isArray(filteredAccounts)">
       <v-container fluid class="ma-0 pa-0">
         <!-- sheet -->
-        <v-row
-          class="position-sticky top-0 mx-0 px-0 mb-2"
-          style="z-index: 20; background-color: #f9f9f9"
-        >
+        <v-row class="position-sticky top-0 mx-0 px-0 mb-2" style="z-index: 20; background-color: #f9f9f9">
           <v-col cols="12" class="pb-0 px-0">
-            <v-sheet
-              class="mx-3 px-4 pt-6 pb-3 mt-1 mb-0 border"
-              elevation="0"
-              rounded
-            >
+            <v-sheet class="mx-3 px-4 pt-6 pb-3 mt-1 mb-0 border" elevation="0" rounded>
               <v-row class="align-center">
                 <v-col cols="1">
-                  <v-icon
-                    size="32"
-                    color="black"
-                    style="cursor: pointer"
-                    @click="returnToCategories"
-                  >
+                  <v-icon size="32" color="black" style="cursor: pointer" @click="returnToCategories">
                     mdi-chevron-left
                   </v-icon>
                 </v-col>
@@ -101,16 +89,8 @@
         </v-row>
 
         <!-- cards -->
-        <v-row
-          dense
-          class="mx-0 px-0 mt-0 mb-3 pt-2"
-          style="background-color: #f9f9f9"
-        >
-          <v-col
-            v-for="account in filteredAccounts"
-            :key="account.id"
-            cols="12"
-          >
+        <v-row dense class="mx-0 px-0 mt-0 mb-3 pt-2" style="background-color: #f9f9f9">
+          <v-col v-for="account in filteredAccounts" :key="account.id" cols="12">
             <v-card
               elevation="2"
               class="d-flex align-center pa-2 mx-3"
@@ -128,13 +108,7 @@
               <v-btn icon small flat outlined class="transparent-btn close-btn">
                 <v-icon
                   :color="account.favorite ? 'blue' : undefined"
-                  @click.stop="
-                    accountStore.toggleFavorite(
-                      account.id,
-                      account.favorite,
-                      account.enc
-                    )
-                  "
+                  @click.stop="accountStore.toggleFavorite(account.id, account.favorite, account.enc)"
                 >
                   {{ account.favorite ? "mdi-star" : "mdi-star-outline" }}
                 </v-icon>
@@ -145,12 +119,7 @@
                 flat
                 outlined
                 class="transparent-btn close-btn"
-                @click.stop="
-                  accountStore.openAccountDialog(
-                    account,
-                    authStore.currUser.pwd
-                  )
-                "
+                @click.stop="accountStore.openAccountDialog(account, authStore.currUser.pwd)"
               >
                 <v-icon>mdi-pencil-outline</v-icon>
               </v-btn>
@@ -174,12 +143,7 @@
         icon
         fab
         class="add-btn align-center justify-center"
-        style="
-          position: fixed;
-          bottom: 16px;
-          left: 50%;
-          transform: translateX(-50%);
-        "
+        style="position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%)"
         @click="
           accountStore.openAccountDialog(
             {
@@ -193,10 +157,7 @@
       </v-btn>
     </template>
     <div v-else>
-      <p>
-        Error: Failed to load accounts. Please check your connection and try
-        again.
-      </p>
+      <p>Error: Failed to load accounts. Please check your connection and try again.</p>
     </div>
 
     <!-- Account Dialog -->
@@ -204,7 +165,7 @@
       v-model="accountStore.dialog"
       :form-data="accountStore.state.formData"
       @save="($event) => handleSave($event)"
-      @cancel="handleCancel"
+      @cancel="accountStore.closeAccountDialog"
     />
   </v-container>
 </template>
@@ -216,13 +177,7 @@ import { useCategoryStore } from "@/stores/category";
 import AccountDialog from "@/components/AccountDialog.vue";
 import { useAuthStore } from "@/stores/auth";
 import { computed, onMounted, ref, watch, nextTick } from "vue";
-import {
-  toast,
-  alertDialog,
-  confirmDialog,
-  blockScreen,
-  unblockScreen,
-} from "@/ui/dialogState.js";
+import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
 
 const router = useRouter();
 const route = useRoute();
@@ -231,17 +186,11 @@ const categoryStore = useCategoryStore();
 const authStore = useAuthStore();
 
 onMounted(async () => {
-  console.log(
-    "Accounts.vue mounted, accountStore.isLoaded:",
-    accountStore.isLoaded
-  );
+  console.log("Accounts.vue mounted, accountStore.isLoaded:", accountStore.isLoaded);
   try {
     if (!accountStore.isLoaded) {
       await accountStore.subscribeToAccounts();
-      console.log(
-        "Accounts.vue subscribed, accountStore.isLoaded:",
-        accountStore.isLoaded
-      );
+      console.log("Accounts.vue subscribed, accountStore.isLoaded:", accountStore.isLoaded);
     }
   } catch (error) {
     console.error("Accounts.vue subscribeToAccounts failed:", error);
@@ -262,11 +211,7 @@ const categoryName = computed(() => route.query.name || "");
 
 const filteredAccounts = computed(() => {
   const accounts = accountStore.filteredAccounts;
-  console.log(
-    "Accounts.vue filteredAccounts",
-    "selectedCatId:",
-    accountStore.selectedCatId
-  );
+  console.log("Accounts.vue filteredAccounts", "selectedCatId:", accountStore.selectedCatId);
   return accounts;
 });
 
@@ -315,16 +260,11 @@ const scrollToAccount = (scrollTo) => {
         element.classList.add("sheets-focus");
         console.log(`Accounts.vue scrolled to account: ${scrollTo}`);
       } else {
-        console.warn(
-          `Accounts.vue account element not found: account-${scrollTo}`
-        );
+        console.warn(`Accounts.vue account element not found: account-${scrollTo}`);
       }
     });
   } else {
-    console.log(
-      "Accounts.vue scrollToAccount, no scrollTo provided:",
-      scrollTo
-    );
+    console.log("Accounts.vue scrollToAccount, no scrollTo provided:", scrollTo);
   }
 };
 
@@ -333,18 +273,11 @@ watch(
   (newQuery) => {
     if (newQuery.scrollTo) {
       nextTick(() => {
-        console.log(
-          "Accounts.vue watch triggered, scrollTo:",
-          newQuery.scrollTo,
-          "ts:",
-          newQuery.ts
-        );
+        console.log("Accounts.vue watch triggered, scrollTo:", newQuery.scrollTo, "ts:", newQuery.ts);
         scrollToAccount(newQuery.scrollTo);
       });
     } else {
-      console.log(
-        "Accounts.vue watch triggered, no scrollTo, initial load or no scroll needed"
-      );
+      console.log("Accounts.vue watch triggered, no scrollTo, initial load or no scroll needed");
     }
   },
   { immediate: true, deep: true }
@@ -369,9 +302,5 @@ const handleSave = async (formData) => {
     console.error("Accounts.vue handleSave failed:", error);
     alertDialog("Accounts.vue handleSave failed", error);
   }
-};
-
-const handleCancel = (payload) => {
-  accountStore.closeAccountDialog();
 };
 </script>

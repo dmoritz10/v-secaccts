@@ -1,26 +1,12 @@
 import { defineStore } from "pinia";
 import { computed, reactive, ref, nextTick } from "vue";
 import { db } from "@/firebase";
-import {
-  collection,
-  query,
-  onSnapshot,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  getDocs,
-} from "firebase/firestore";
+import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { useAccountStore } from "./account";
 import { useAuthStore } from "./auth";
-import { encyptCat, decyptCat } from "@/services/common";
-import {
-  toast,
-  alertDialog,
-  confirmDialog,
-  blockScreen,
-  unblockScreen,
-} from "@/ui/dialogState.js";
+// import { encyptCat, decyptCat } from "@/services/common";
+
+import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
 
 export const useCategoryStore = defineStore("category", () => {
   const accountStore = useAccountStore();
@@ -49,39 +35,21 @@ export const useCategoryStore = defineStore("category", () => {
       state.searchQuery = value;
     },
   });
-  const numberOfFilteredCategories = computed(
-    () => filteredCategories.value?.length || 0
-  );
+  const numberOfFilteredCategories = computed(() => filteredCategories.value?.length || 0);
 
   const filteredCategories = computed(() => {
-    const query = state.searchQuery
-      ? state.searchQuery.toLowerCase().trim()
-      : "";
-    if (
-      !query ||
-      !accountStore.isLoaded ||
-      !Array.isArray(accountStore.state.items)
-    ) {
-      console.log(
-        "Empty query or accounts not loaded, returning all categories:",
-        state.items.length
-      );
-      return state.items
-        .slice()
-        .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    const query = state.searchQuery ? state.searchQuery.toLowerCase().trim() : "";
+    if (!query || !accountStore.isLoaded || !Array.isArray(accountStore.state.items)) {
+      console.log("Empty query or accounts not loaded, returning all categories:", state.items.length);
+      return state.items.slice().sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     }
 
     const filtered = state.items.filter((cat) => {
       const hasMatchingAccount = accountStore.state.items.some((account) => {
-        const matches =
-          account.categoryId === cat.id &&
-          account.provider?.toLowerCase().includes(query);
+        const matches = account.categoryId === cat.id && account.provider?.toLowerCase().includes(query);
         return matches;
       });
-      console.log(
-        `Category ${cat.id} (${cat.name}): hasMatchingAccount=`,
-        hasMatchingAccount
-      );
+      console.log(`Category ${cat.id} (${cat.name}): hasMatchingAccount=`, hasMatchingAccount);
       return hasMatchingAccount;
     });
 
@@ -218,13 +186,6 @@ export const useCategoryStore = defineStore("category", () => {
     console.log("Category dialog closed");
   };
 
-  const cryptCat = async (cat, pwd) => {
-    console.log("cryptCat", cat.enc, pwd);
-    if (cat.enc) {
-      await decyptCat(cat, pwd);
-    } else await encyptCat(cat, pwd);
-  };
-
   return {
     state,
     isLoaded,
@@ -239,6 +200,5 @@ export const useCategoryStore = defineStore("category", () => {
     openCategoryDialog,
     closeCategoryDialog,
     categoryNameFor,
-    cryptCat,
   };
 });

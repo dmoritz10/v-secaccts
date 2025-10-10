@@ -2,26 +2,11 @@
   <v-container class="pt-5 bg-grey-lighten-3">
     <v-sheet class="px-4 py-10 mb-5" elevation="5" rounded>
       <v-row class="align-center justify-center">
-        <h1 class="subtitle-1 grey--text text-center">
-          Secure Accounts Authorization
-        </h1>
+        <h1 class="subtitle-1 grey--text text-center">Secure Accounts Authorization</h1>
       </v-row>
     </v-sheet>
     <v-row class="my-10" justify="center">
-      <v-btn
-        id="customGoogleBtn"
-        color="primary"
-        rounded
-        large
-        @click="signIn"
-        class="google-btn"
-      >
-        Sign in
-      </v-btn>
-      <!-- <v-btn color="grey" @click="handleSignOut">
-        Sign Out
-        <v-icon end>mdi-exit-to-app</v-icon>
-      </v-btn> -->
+      <v-btn id="customGoogleBtn" color="primary" rounded large @click="signIn" class="google-btn"> Sign in </v-btn>
     </v-row>
     <!-- Modal (v-dialog) -->
     <v-dialog class="mt-16" v-model="dialogLogin" max-width="600">
@@ -29,12 +14,7 @@
         <v-card-title class="text-h5">Sign in Verification</v-card-title>
         <v-form ref="form">
           <v-text-field v-model="usr" label="User" required></v-text-field>
-          <v-text-field
-            type="password"
-            v-model="pwd"
-            label="Password"
-            required
-          ></v-text-field>
+          <v-text-field type="password" v-model="pwd" label="Password" required></v-text-field>
           <v-card-text>
             <div v-html="msg"></div>
           </v-card-text>
@@ -53,22 +33,17 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
-import { db, auth, provider } from "@/firebase";
+import { auth, provider } from "@/firebase";
 import { signInWithPopup, onAuthStateChanged, signOut } from "firebase/auth";
-import { getOption, getUser, clearUser } from "../services/common";
-import { encryptMessage, decryptMessage } from "../services/enc";
-import {
-  toast,
-  alertDialog,
-  confirmDialog,
-  blockScreen,
-  unblockScreen,
-} from "@/ui/dialogState.js";
+import { getOption, getUser } from "../services/common";
+import { alertDialog } from "@/ui/dialogState.js";
+import { initializeVerifier, verifyPassword } from "../services/enc.js";
+import { setKey, clearKey } from "@/services/keyVault";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const usr = ref("dmoritz10");
-const pwd = ref("Tempdm123!");
+const pwd = ref("Tempdm101!");
 const dialogLogin = ref(false);
 const msg = ref("&nbsp;");
 
@@ -124,10 +99,22 @@ const clearDialog = () => {
 async function submit() {
   msg.value = "&nbsp;";
 
-  const rtn = await getOption("shtList");
-  if (!rtn) {
+  // One-time routine to initialize the vault option
+  // It is important to fully decrypt all categories before running
+  // (async () => {
+  //   const password = prompt("Enter the shared encryption password (for setup only):");
+  //   const verifierData = await initializeVerifier(password);
+
+  //   console.log("Verifier object to store in Firebase:");
+  //   console.log(JSON.stringify(verifierData, null, 2));
+  // })();
+  // return;
+
+  const vault = await getOption("vault");
+  if (!vault) {
     alertDialog("Database open error");
     authStore.clearUser();
+    clearKey();
     await signOut(auth);
     return;
   }
@@ -136,32 +123,32 @@ async function submit() {
   if (!userAuth) {
     msg.value = "Invalid Login";
     authStore.clearUser();
+    clearKey();
     return;
   }
 
-  const t = await getOption("qbf");
-  let dx;
-  try {
-    dx = await decryptMessage(rtn, pwd.value);
-  } catch (err) {
-    dx = null;
-  }
+  var key = await verifyPassword(pwd.value, vault);
 
-  if (dx !== t) {
+  pwd.value = null;
+
+  if (!key) {
     msg.value = "Invalid Login";
     authStore.clearUser();
+    clearKey();
     return;
   }
+
+  setKey(key);
 
   // Update currUser with verified credentials
   authStore.setUser({
     ...authStore.currUser,
     userName: usr.value.toLowerCase(),
-    pwd: pwd.value,
     admin: userAuth.admin,
   });
 
   dialogLogin.value = false;
+
   router.replace("/categories");
 }
 </script>

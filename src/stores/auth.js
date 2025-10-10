@@ -1,36 +1,33 @@
-import { ref } from "vue";
+import { ref, reactive } from "vue";
 import { defineStore } from "pinia";
 
-export const useAuthStore = defineStore("auth", {
-  state: () => ({
-    currUser: ref({
-      name: null,
-      email: null,
-      uid: null,
-      userName: null,
-      pwd: null,
-      admin: false,
-    }),
-  }),
-  actions: {
-    setUser(userData) {
-      this.currUser.name = userData.name || null;
-      this.currUser.email = userData.email || null;
-      this.currUser.uid = userData.uid || null;
-      this.currUser.userName = userData.userName || null;
-      this.currUser.pwd = userData.pwd || null;
-      this.currUser.admin = userData.admin || false;
-    },
-    clearUser() {
-      this.currUser.name = null;
-      this.currUser.email = null;
-      this.currUser.uid = null;
-      this.currUser.userName = null;
-      this.currUser.pwd = null;
-      this.currUser.admin = false;
-    },
-    resetStore() {
-      this.$reset();
-    },
-  },
+export const useAuthStore = defineStore("auth", () => {
+  const currUser = reactive({
+    name: null,
+    email: null,
+    uid: null,
+    userName: null,
+    pwd: null,
+    admin: false,
+  });
+
+  const setUser = (userData) => {
+    currUser.name = userData.name || null;
+    currUser.email = userData.email || null;
+    currUser.uid = userData.uid || null;
+    currUser.userName = userData.userName || null;
+    currUser.pwd = userData.pwd || null;
+    currUser.admin = userData.admin || false;
+  };
+
+  const clearUser = () => {
+    currUser.name = null;
+    currUser.email = null;
+    currUser.uid = null;
+    currUser.userName = null;
+    currUser.pwd = null;
+    currUser.admin = false;
+  };
+
+  return { clearUser, setUser, currUser };
 });

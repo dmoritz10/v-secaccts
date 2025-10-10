@@ -4,18 +4,8 @@
       <v-card-title class="text-h6">Change Password</v-card-title>
 
       <v-card-text>
-        <v-text-field
-          v-model="currentPwd"
-          label="Current Password"
-          type="password"
-          variant="outlined"
-        />
-        <v-text-field
-          v-model="newPwd"
-          label="New Password"
-          type="password"
-          variant="outlined"
-        />
+        <v-text-field v-model="currentPwd" label="Current Password" type="password" variant="outlined" />
+        <v-text-field v-model="newPwd" label="New Password" type="password" variant="outlined" />
         <v-text-field
           v-model="confirmPwd"
           label="Confirm New Password"
@@ -36,42 +26,26 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
-import { getOption } from "@/services/common";
+import { ref, computed } from "vue";
+import { getOption, updateAccts } from "@/services/common";
 
-import {
-  collection,
-  doc,
-  query,
-  getDocs,
-  where,
-  updateDoc,
-  writeBatch,
-  orderBy,
-} from "firebase/firestore";
-import {
-  toast,
-  alertDialog,
-  confirmDialog,
-  blockScreen,
-  unblockScreen,
-} from "@/ui/dialogState.js";
+import { collection, doc, query, getDocs, where, updateDoc, writeBatch, orderBy } from "firebase/firestore";
+import { toast, alertDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
 import { db } from "@/firebase";
 
 import { encryptAccts, decryptAccts, acctDBFlds } from "@/services/common";
-import { encryptMessage, decryptMessage } from "@/services/enc";
+import { encryptMessage, verifyPassword, initializeVerifier, deriveKey } from "@/services/enc";
 import { useAuthStore } from "@/stores/auth";
 import { useAccountStore } from "@/stores/account";
+import { setKey, clearKey } from "@/services/keyVault";
 
 const authStore = useAuthStore();
 const accountStore = useAccountStore();
 
-const strongRegex = new RegExp(
-  "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})"
-);
-const invalidPwdMsg = `Passwords must contain at least 
-    1 lowercase alphabetical character and 
-    1 uppercase alphabetical character and 
+const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})");
+const invalidPwdMsg = `Passwords must contain at least
+    1 lowercase alphabetical character and
+    1 uppercase alphabetical character and
     1 numeric character and
     1 special character and
     8 characters
@@ -96,10 +70,7 @@ const confirmErrorMsg = computed(() => {
 
 const confirmError = computed(() => confirmErrorMsg.value !== "");
 
-const canSubmit = computed(
-  () =>
-    currentPwd.value && newPwd.value && confirmPwd.value && !confirmError.value
-);
+const canSubmit = computed(() => currentPwd.value && newPwd.value && confirmPwd.value && !confirmError.value);
 
 // Open method for parent
 function open() {
@@ -112,20 +83,32 @@ function open() {
 // Cancel
 function cancel() {
   show.value = false;
+  currentPwd.value = null;
+  newPwd.value = null;
 }
 
-// Submit
 async function submit() {
   if (!canSubmit.value) return;
 
+  const vault = await getOption("vault");
+  if (!vault) {
+    alertDialog("Database open error");
+    clearKey();
+    await signOut(auth);
+    return;
+  }
+
   show.value = false;
-  console.log("Current:", currentPwd.value);
-  console.log("New:", newPwd.value);
 
-  var pwdText = await getOption("qbf");
+  var currKey = await verifyPassword(currentPwd.value, vault);
 
-  var cPwd = await verifyCurrPwd(currentPwd.value);
-  if (!cPwd) return;
+  currentPwd.value = null;
+
+  if (!currKey) {
+    newPwd.value = null;
+    alertDialog("Change Password", "Invalid password");
+    return null;
+  }
 
   blockScreen();
 
@@ -134,83 +117,69 @@ async function submit() {
 
   const encAccts = accts.filter((acct) => acct.enc);
 
-  const decAccts = await decryptAccts(encAccts, authStore.currUser.pwd);
+  const decAccts = await decryptAccts(encAccts);
 
-  const reEncAccts = await encryptAccts(decAccts, newPwd.value);
-  const encPwd = await encryptMessage(pwdText, newPwd.value);
+  const newVault = await initializeVerifier(newPwd.value);
 
-  accountStore.unsubscribeFromAccounts();
-  const updStat = await updateAcctsAndOption(reEncAccts, true, encPwd);
-  accountStore.subscribeToAccounts();
+  const { salt } = newVault;
 
-  // Not necessary becase db update comes back
-  // authStore.currUser.pwd = newPwd.value;
+  const newKey = await deriveKey(newPwd.value, salt);
+
+  newPwd.value = null;
+
+  setKey(newKey);
+
+  const reEncAccts = await encryptAccts(decAccts);
+
+  // accountStore.unsubscribeFromAccounts();
+  const bUpd = await updateAccts(reEncAccts, true);
+  // accountStore.subscribeToAccounts();
 
   unblockScreen();
 
   toast("Change of password is complete", 3000);
 }
 
-async function verifyCurrPwd(pwd) {
-  var pwdEnc = await getOption("shtList");
-  var qbf = await getOption("qbf");
+// async function updateAcctsAndOption(accts, enc, encPwd) {
+//   console.time("updateAccts");
+//   const batch = writeBatch(db);
 
-  try {
-    var dx = await decryptMessage(pwdEnc, pwd);
-  } catch (err) {
-    var dx = null;
-  }
+//   for (let i = 0; i < accts.length; i++) {
+//     let acct = accts[i];
+//     const docRef = doc(db, "accounts", acct.id);
+//     for (const key in acct) {
+//       // remove non-db elements from acct
+//       if (acctDBFlds.indexOf(key) == -1) delete acct[key];
+//     }
+//     acct["enc"] = enc;
+//     batch.update(docRef, acct);
+//   }
 
-  console.log("verifyCurrPwd", dx, pwd, qbf);
+//   const options = collection(db, "options");
+//   const q = query(options, where("key", "==", "shtList"));
+//   const querySnapshot = await getDocs(q);
+//   const optionId = querySnapshot.docs[0].id; // Get first matching document
+//   console.log("optionId", querySnapshot.docs[0], optionId);
+//   const updateRef = doc(db, "options", optionId);
+//   batch.update(updateRef, { value: encPwd });
 
-  if (dx != qbf) {
-    alertDialog("Change Password", "Invalid password");
-    return null;
-  }
+//   let rtn = batch
+//     .commit()
+//     .then((result) => {
+//       console.log("updateAccts: ", accts.length);
+//       console.timeEnd("updateAccts");
+//       console.log("Batch update successful!");
 
-  return pwd;
-}
+//       return result;
+//     })
+//     .catch((error) => {
+//       console.error("Batch update failed: ", error);
+//       alertDialog("Batch update failed", error);
+//       return error;
+//     });
 
-async function updateAcctsAndOption(accts, enc, encPwd) {
-  console.time("updateAccts");
-  const batch = writeBatch(db);
-
-  for (let i = 0; i < accts.length; i++) {
-    let acct = accts[i];
-    const docRef = doc(db, "accounts", acct.id);
-    for (const key in acct) {
-      // remove non-db elements from acct
-      if (acctDBFlds.indexOf(key) == -1) delete acct[key];
-    }
-    acct["enc"] = enc;
-    batch.update(docRef, acct);
-  }
-
-  const options = collection(db, "options");
-  const q = query(options, where("key", "==", "shtList"));
-  const querySnapshot = await getDocs(q);
-  const optionId = querySnapshot.docs[0].id; // Get first matching document
-  console.log("optionId", querySnapshot.docs[0], optionId);
-  const updateRef = doc(db, "options", optionId);
-  batch.update(updateRef, { value: encPwd });
-
-  let rtn = batch
-    .commit()
-    .then((result) => {
-      console.log("updateAccts: ", accts.length);
-      console.timeEnd("updateAccts");
-      console.log("Batch update successful!");
-
-      return result;
-    })
-    .catch((error) => {
-      console.error("Batch update failed: ", error);
-      alertDialog("Batch update failed", error);
-      return error;
-    });
-
-  return rtn;
-}
+//   return rtn;
+// }
 
 defineExpose({ open });
 </script>

@@ -1,13 +1,7 @@
 <template>
-  <v-dialog
-    :model-value="modelValue"
-    @update:model-value="$emit('update:modelValue', $event)"
-    max-width="600"
-  >
+  <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue')" max-width="600">
     <v-card>
-      <v-card-title
-        >{{ formData.accountId ? "Edit Account" : "Add Account" }}
-      </v-card-title>
+      <v-card-title>{{ formData.accountId ? "Edit Account" : "Add Account" }} </v-card-title>
       <v-card-text>
         <v-form ref="editForm">
           <v-text-field
@@ -27,18 +21,8 @@
             required
             :rules="[(v) => !!v || 'Category is required']"
           ></v-select>
-          <v-text-field
-            v-model="formData.login"
-            label="Login"
-            variant="outlined"
-            clearable
-          ></v-text-field>
-          <v-text-field
-            v-model="formData.password"
-            label="Password"
-            variant="outlined"
-            clearable
-          ></v-text-field>
+          <v-text-field v-model="formData.login" label="Login" variant="outlined" clearable></v-text-field>
+          <v-text-field v-model="formData.password" label="Password" variant="outlined" clearable></v-text-field>
 
           <!--   -->
           <!-- :type="showPassword ? 'text' : 'password'" -->
@@ -51,36 +35,11 @@
             variant="outlined"
             clearable
           ></v-text-field>
-          <v-text-field
-            v-model="formData.loginUrl"
-            label="Login URL"
-            variant="outlined"
-            clearable
-          ></v-text-field>
-          <v-text-field
-            v-model="formData.autoPay"
-            label="Auto Pay Info"
-            variant="outlined"
-            clearable
-          ></v-text-field>
-          <v-text-field
-            v-model="formData.pinNbr"
-            label="PIN Number"
-            variant="outlined"
-            clearable
-          ></v-text-field>
-          <v-textarea
-            v-model="formData.securityQA"
-            label="Security Q&A"
-            variant="outlined"
-            clearable
-          ></v-textarea>
-          <v-textarea
-            v-model="formData.notes"
-            label="Notes"
-            variant="outlined"
-            clearable
-          ></v-textarea>
+          <v-text-field v-model="formData.loginUrl" label="Login URL" variant="outlined" clearable></v-text-field>
+          <v-text-field v-model="formData.autoPay" label="Auto Pay Info" variant="outlined" clearable></v-text-field>
+          <v-text-field v-model="formData.pinNbr" label="PIN Number" variant="outlined" clearable></v-text-field>
+          <v-textarea v-model="formData.securityQA" label="Security Q&A" variant="outlined" clearable></v-textarea>
+          <v-textarea v-model="formData.notes" label="Notes" variant="outlined" clearable></v-textarea>
           <v-checkbox v-model="formData.favorite" label="Favorite"></v-checkbox>
         </v-form>
       </v-card-text>

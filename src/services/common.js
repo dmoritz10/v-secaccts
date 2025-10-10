@@ -1,22 +1,7 @@
 import { db } from "@/firebase";
-import {
-  collection,
-  doc,
-  query,
-  getDocs,
-  where,
-  updateDoc,
-  writeBatch,
-  orderBy,
-} from "firebase/firestore";
+import { collection, doc, query, getDocs, where, updateDoc, addDoc, writeBatch, orderBy } from "firebase/firestore";
 
-import {
-  toast,
-  alertDialog,
-  confirmDialog,
-  blockScreen,
-  unblockScreen,
-} from "@/ui/dialogState.js";
+import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
 
 import { encryptMessage, decryptMessage } from "@/services/enc";
 
@@ -48,12 +33,8 @@ export const acctDBFlds = [
   "lastChange",
 ];
 
-function clearUser(usr) {
-  Object.keys(usr).forEach((key) => {
-    delete usr[key];
-  });
-}
 async function getCats() {
+  //not used
   const q = query(collection(db, "categories"), orderBy("name", "asc"));
   const getCats = await getDocs(q);
   const cats = getCats.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -61,15 +42,14 @@ async function getCats() {
 }
 
 async function getAccts() {
+  // used
   const getAccts = await getDocs(collection(db, "accounts"));
-  // const accts = getAccts.docs.map((doc) => doc.data());
-  // const ids = getAccts.docs.map((doc) => ({ id: doc.id }));
-  // return { accts: accts, ids: ids };
   const accts = getAccts.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   return accts;
 }
 
 async function getUser(userName) {
+  // used
   try {
     const users = collection(db, "users");
     const q = query(users, where("name", "==", userName));
@@ -87,12 +67,13 @@ async function getUser(userName) {
 }
 
 async function getOption(keyValue) {
-  console.log("db", db);
+  // used
   try {
     const options = collection(db, "options");
-    console.log("options", options);
     const q = query(options, where("key", "==", keyValue));
     const querySnapshot = await getDocs(q);
+
+    console.log("query", querySnapshot, querySnapshot.docs[0].data().value);
 
     if (querySnapshot.empty) {
       return null;
@@ -110,30 +91,27 @@ async function getOption(keyValue) {
 }
 
 async function updateOption(key, val) {
-  if (typeof val === "object") {
-    var strVal = JSON.stringify(val);
-  } else {
-    var strVal = val;
-  }
-
   try {
     const options = collection(db, "options");
     const q = query(options, where("key", "==", key));
     const querySnapshot = await getDocs(q);
 
-    if (querySnapshot.empty) return null;
-
-    const optionId = querySnapshot.docs[0].id; // Get first matching document
-    const updateRef = doc(db, "options", optionId);
-    await updateDoc(updateRef, { value: strVal });
+    if (querySnapshot.empty) {
+      await addDoc(collection(db, "options"), { key: key, value: val });
+    } else {
+      const optionId = querySnapshot.docs[0].id; // Get first matching document
+      const updateRef = doc(db, "options", optionId);
+      await updateDoc(updateRef, { value: val });
+    }
   } catch (error) {
     alertDialog("Error updating Options", error);
     return null;
   }
 }
 
-async function encyptCat(cat, pwd) {
-  console.log("encryptCat", pwd);
+async function encryptCat(cat, pwd) {
+  // used
+  console.log("encryptCat", cat);
   // console.time("encryptCat");
 
   blockScreen();
@@ -147,10 +125,7 @@ async function encyptCat(cat, pwd) {
   const decAccts = accts.filter((acct) => !acct.enc);
 
   if (!decAccts.length) {
-    alertDialog(
-      "Encrypt Category",
-      `Category ${cat.name} has no decrypted accounts`
-    );
+    alertDialog("Encrypt Category", `Category ${cat.name} has no decrypted accounts`);
     cat.enc = true;
     unblockScreen();
     return;
@@ -172,7 +147,8 @@ async function encyptCat(cat, pwd) {
   console.timeEnd("encryptCat");
 }
 
-async function decyptCat(cat, pwd) {
+async function decryptCat(cat, pwd) {
+  // used
   // console.time("decryptCat");
   const confirmOK = await confirmDialog(
     "<strong class='text-red'>Warning !",
@@ -194,10 +170,7 @@ async function decyptCat(cat, pwd) {
 
   const encAccts = accts.filter((acct) => acct.enc);
   if (!encAccts.length) {
-    alertDialog(
-      "Decrypt Category",
-      `Category ${cat.name} has no encrypted accounts`
-    );
+    alertDialog("Decrypt Category", `Category ${cat.name} has no encrypted accounts`);
     cat.enc = false;
     unblockScreen();
     return;
@@ -220,7 +193,8 @@ async function decyptCat(cat, pwd) {
 }
 
 async function encryptAccts(accts, pwd) {
-  console.log("encryptAccts");
+  // used
+  console.log("encryptAccts", pwd);
 
   try {
     // Initialize result array with same structure
@@ -253,11 +227,12 @@ async function encryptAccts(accts, pwd) {
 
     return result;
   } catch (error) {
-    throw new Error(`Encryption failed: ${error.message}`);
+    console.log(`Encryption failed: ${error.message}`);
   }
 }
 
 async function decryptAcctReactive(acct, pwd) {
+  //used
   for (const key in acct) {
     if (acctEncFlds.indexOf(key) > -1) {
       acct[key] = await decryptMessage(acct[key], pwd); // ✅ mutate property, reactivity preserved
@@ -266,6 +241,7 @@ async function decryptAcctReactive(acct, pwd) {
 }
 
 async function decryptAccts(accts, pwd) {
+  //used
   console.log("decryptAccts");
 
   try {
@@ -288,12 +264,10 @@ async function decryptAccts(accts, pwd) {
 
     // Process all decryption promises
     const decryptedResults = await Promise.all(decryptionPromises);
-    console.log("promise.all", decryptedResults);
     // Update the result array with decrypted values
     decryptedResults.forEach(({ objIndex, key, decrypted }) => {
       result[objIndex][key] = decrypted;
     });
-    console.log("decryptAccts:", decryptionPromises.length, result);
 
     return result;
   } catch (error) {
@@ -303,6 +277,7 @@ async function decryptAccts(accts, pwd) {
 }
 
 async function updateAccts(accts, enc, disableOnSnapshot = false) {
+  //used
   console.time("updateAccts");
 
   // if (disableOnSnapshot) unsubscribeAccts();
@@ -341,11 +316,10 @@ export {
   getUser,
   getOption,
   updateOption,
-  encyptCat,
-  decyptCat,
+  encryptCat,
+  decryptCat,
   encryptAccts,
   decryptAccts,
   updateAccts,
-  clearUser,
   decryptAcctReactive,
 };

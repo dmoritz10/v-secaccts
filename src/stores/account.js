@@ -1,26 +1,10 @@
 import { defineStore } from "pinia";
 import { computed, reactive, ref } from "vue";
 import { db } from "@/firebase";
-import {
-  collection,
-  query,
-  onSnapshot,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  getDocs,
-} from "firebase/firestore";
-import {
-  toast,
-  alertDialog,
-  confirmDialog,
-  blockScreen,
-  unblockScreen,
-} from "@/ui/dialogState.js";
+import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs } from "firebase/firestore";
+import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
 import { encryptMessage, decryptMessage } from "@/services/enc";
-import { encryptAccts, decryptAccts, acctDBFlds } from "@/services/common";
-import { pinia } from "@/services/pinia";
+import { encryptAccts, acctDBFlds } from "@/services/common";
 
 import { useCategoryStore } from "@/stores/category";
 import { useAuthStore } from "@/stores/auth";
@@ -77,17 +61,16 @@ export const useAccountStore = defineStore("account", () => {
   });
 
   watch(state.formData.enc, (newVal, oldVal) => {
-    console.log(
-      "%c[accountStore.formData.enc]",
-      "color: red; font-weight: bold;",
-      { oldVal, newVal, typeofOld: typeof oldVal, typeofNew: typeof newVal }
-    );
+    console.log("%c[accountStore.formData.enc]", "color: red; font-weight: bold;", {
+      oldVal,
+      newVal,
+      typeofOld: typeof oldVal,
+      typeofNew: typeof newVal,
+    });
     console.trace("Change stack trace:");
   });
 
-  const numberOfFilteredAccounts = computed(
-    () => filteredAccounts?.value.length || 0
-  );
+  const numberOfFilteredAccounts = computed(() => filteredAccounts?.value.length || 0);
 
   // Modify filteredAccounts to consider selected filters
   const filteredAccounts = computed(() => {
@@ -95,9 +78,7 @@ export const useAccountStore = defineStore("account", () => {
     const catId = selectedCatId.value;
     console.log("catId", catId, selectedCatId);
     // const catId = selectedCatId;
-    const query = state.searchQuery
-      ? state.searchQuery.toLowerCase().trim()
-      : "";
+    const query = state.searchQuery ? state.searchQuery.toLowerCase().trim() : "";
     let filtered = state.items || [];
 
     if (!state.isLoaded) return [];
@@ -105,18 +86,14 @@ export const useAccountStore = defineStore("account", () => {
     // Filter by categoryId
     if (catId) {
       console.log("filter by categoryId", catId);
-      filtered = filtered.filter(
-        (account) => (account.categoryId || "") === catId
-      );
+      filtered = filtered.filter((account) => (account.categoryId || "") === catId);
     } else {
       console.log("Showing all accounts");
     }
 
     // Filter by search query
     if (query) {
-      filtered = filtered.filter((account) =>
-        account.provider?.toLowerCase().includes(query)
-      );
+      filtered = filtered.filter((account) => account.provider?.toLowerCase().includes(query));
     }
 
     // Filter by activeFilters
@@ -129,9 +106,7 @@ export const useAccountStore = defineStore("account", () => {
       console.log("autopay", filtered);
     }
 
-    return filtered.sort((a, b) =>
-      (a.provider || "").localeCompare(b.provider || "")
-    );
+    return filtered.sort((a, b) => (a.provider || "").localeCompare(b.provider || ""));
   });
 
   // Action to set filters
@@ -156,16 +131,9 @@ export const useAccountStore = defineStore("account", () => {
         id: doc.id,
         ...doc.data(),
       }));
-      state.items.sort((a, b) =>
-        (a.provider || "").localeCompare(b.provider || "")
-      );
+      state.items.sort((a, b) => (a.provider || "").localeCompare(b.provider || ""));
       state.isLoaded = true;
-      console.log(
-        "Initial accounts loaded:",
-        state.items.length,
-        "items:",
-        state.items
-      );
+      console.log("Initial accounts loaded:", state.items.length, "items:", state.items);
 
       console.log("Subscribing to accounts for real-time updates...");
       unsubscribeAccounts.value = onSnapshot(q, (snapshot) => {
@@ -202,9 +170,7 @@ export const useAccountStore = defineStore("account", () => {
             console.log("shapshot", "update", index, data);
           }
         });
-        state.items.sort((a, b) =>
-          (a.provider || "").localeCompare(b.provider || "")
-        );
+        state.items.sort((a, b) => (a.provider || "").localeCompare(b.provider || ""));
         console.log("Accounts updated via subscription:", state.items.length);
       });
     } catch (error) {
@@ -229,15 +195,11 @@ export const useAccountStore = defineStore("account", () => {
   const saveAccount = async (formData) => {
     console.log("saveaccount", formData);
     try {
-      const cat = categoryStore.state.items.find(
-        (cat) => cat.id === formData.categoryId
-      );
+      const cat = categoryStore.state.items.find((cat) => cat.id === formData.categoryId);
 
       formData.lastChange = new Date().toDateString();
       if (!formData.enc && cat.enc) {
-        var encAccts = (
-          await encryptAccts([formData], authStore.currUser.pwd)
-        )[0];
+        var encAccts = (await encryptAccts([formData], authStore.currUser.pwd))[0];
         encAccts.enc = true;
       } else {
         var encAccts = formData;
@@ -303,36 +265,18 @@ export const useAccountStore = defineStore("account", () => {
       ? {
           accountId: account.id,
           provider: account.provider,
-          accountNbr: account.enc
-            ? await decryptMessage(account.accountNbr, pwd)
-            : account.accountNbr,
-          autoPay: account.enc
-            ? await decryptMessage(account.autoPay, pwd)
-            : account.autoPay,
+          accountNbr: account.enc ? await decryptMessage(account.accountNbr, pwd) : account.accountNbr,
+          autoPay: account.enc ? await decryptMessage(account.autoPay, pwd) : account.autoPay,
           categoryId: account.categoryId,
           enc: account.enc,
-          login: account.enc
-            ? await decryptMessage(account.login, pwd)
-            : account.login,
-          loginUrl: account.enc
-            ? await decryptMessage(account.loginUrl, pwd)
-            : account.loginUrl,
-          notes: account.enc
-            ? await decryptMessage(account.notes, pwd)
-            : account.notes,
-          password: account.enc
-            ? await decryptMessage(account.password, pwd)
-            : account.password,
-          pinNbr: account.enc
-            ? await decryptMessage(account.pinNbr, pwd)
-            : account.pinNbr,
-          securityQA: account.enc
-            ? await decryptMessage(account.securityQA, pwd)
-            : account.securityQA,
+          login: account.enc ? await decryptMessage(account.login, pwd) : account.login,
+          loginUrl: account.enc ? await decryptMessage(account.loginUrl, pwd) : account.loginUrl,
+          notes: account.enc ? await decryptMessage(account.notes, pwd) : account.notes,
+          password: account.enc ? await decryptMessage(account.password, pwd) : account.password,
+          pinNbr: account.enc ? await decryptMessage(account.pinNbr, pwd) : account.pinNbr,
+          securityQA: account.enc ? await decryptMessage(account.securityQA, pwd) : account.securityQA,
           favorite: account.favorite,
-          lastChange: account.enc
-            ? await decryptMessage(account.lastChange, pwd)
-            : account.lastChange,
+          lastChange: account.enc ? await decryptMessage(account.lastChange, pwd) : account.lastChange,
         }
       : {
           accountId: null,

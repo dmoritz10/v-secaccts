@@ -1,10 +1,5 @@
 <template>
-  <v-dialog
-    :model-value="modelValue"
-    @update:model-value="$emit('update:modelValue', $event)"
-    max-width="500px"
-    persistent
-  >
+  <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue')" max-width="500px" persistent>
     <v-card>
       <v-card-title>
         {{ formData.categoryId ? "Edit Category" : "Add Category" }}

@@ -7,28 +7,15 @@
       class="ma-16 d-flex justify-center"
     ></v-progress-circular>
     <template v-else-if="Array.isArray(categoryStore.filteredCategories)">
-      <v-container
-        fluid
-        class="ma-0 pa-0"
-        style="height: 100%; overflow: visible"
-      >
+      <v-container fluid class="ma-0 pa-0" style="height: 100%; overflow: visible">
         <!-- sheet -->
-        <v-row
-          class="position-sticky top-0 mx-0 px-0 mb-2"
-          style="z-index: 20; background-color: #f9f9f9"
-        >
+        <v-row class="position-sticky top-0 mx-0 px-0 mb-2" style="z-index: 20; background-color: #f9f9f9">
           <v-col cols="12" class="pb-0 px-0">
-            <v-sheet
-              class="mx-3 px-4 pt-6 pb-3 mt-1 mb-0 border"
-              elevation="0"
-              rounded
-            >
+            <v-sheet class="mx-3 px-4 pt-6 pb-3 mt-1 mb-0 border" elevation="0" rounded>
               <v-row class="align-center">
                 <v-col cols="1"></v-col>
                 <v-col class="text-center">
-                  <h1 class="subtitle-1 grey--text text-center">
-                    Secure Accounts
-                  </h1>
+                  <h1 class="subtitle-1 grey--text text-center">Secure Accounts</h1>
                 </v-col>
                 <!-- Sandwich / 3-dot menu -->
                 <v-col cols="1" class="d-flex justify-end">
@@ -83,16 +70,8 @@
         </v-row>
 
         <!-- cards -->
-        <v-row
-          dense
-          class="mx-0 px-0 mt-0 mb-3 pt-2"
-          style="background-color: #f9f9f9"
-        >
-          <v-col
-            v-for="category in categoryStore.filteredCategories"
-            :key="category.id"
-            cols="12"
-          >
+        <v-row dense class="mx-0 px-0 mt-0 mb-3 pt-2" style="background-color: #f9f9f9">
+          <v-col v-for="category in categoryStore.filteredCategories" :key="category.id" cols="12">
             <v-card
               elevation="2"
               class="d-flex align-center pa-2 mx-3"
@@ -107,14 +86,8 @@
               <v-btn
                 flat
                 outlined
-                :class="[
-                  'crypt-btn',
-                  'close-btn',
-                  category.enc ? 'bg-red-lighten-2' : 'bg-green-lighten-2',
-                ]"
-                @click.stop="
-                  categoryStore.cryptCat(category, authStore.currUser.pwd)
-                "
+                :class="['crypt-btn', 'close-btn', category.enc ? 'bg-red-lighten-2' : 'bg-green-lighten-2']"
+                @click.stop="cryptCat(category)"
               >
                 {{ category.enc ? "decrypt" : "encrypt" }} </v-btn
               ><v-btn
@@ -147,12 +120,7 @@
         icon
         fab
         class="add-btn align-center justify-center"
-        style="
-          position: fixed;
-          bottom: 16px;
-          left: 50%;
-          transform: translateX(-50%);
-        "
+        style="position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%)"
         @click="categoryStore.openCategoryDialog()"
       >
         <v-icon>mdi-plus</v-icon>
@@ -183,13 +151,8 @@ import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
 import CategoryDialog from "@/components/CategoryDialog.vue";
 import PasswordChangeDialog from "@/components/PasswordChangeDialog.vue";
-import {
-  toast,
-  alertDialog,
-  confirmDialog,
-  blockScreen,
-  unblockScreen,
-} from "@/ui/dialogState.js";
+import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
+import { encryptCat, decryptCat } from "@/services/common";
 
 const router = useRouter();
 const route = useRoute();
@@ -203,6 +166,7 @@ function openChangePasswordDialog() {
 }
 
 onMounted(async () => {
+  console.log("key", authStore.currUser.pwd);
   console.log("Categories.vue mounted, isLoaded:", categoryStore.isLoaded);
   try {
     await categoryStore.subscribeToCategories();
@@ -229,9 +193,7 @@ watch(
         scrollToCategory(newQuery.scrollTo);
       });
     } else {
-      console.log(
-        "Categories.vue watch triggered, no scrollTo, initial load or no scroll needed"
-      );
+      console.log("Categories.vue watch triggered, no scrollTo, initial load or no scroll needed");
     }
   },
   { immediate: true, deep: true }
@@ -287,16 +249,11 @@ const scrollToCategory = (scrollTo) => {
         element.classList.add("sheets-focus");
         console.log(`Categories.vue scrolled to category: ${scrollTo}`);
       } else {
-        console.warn(
-          `Categories.vue category element not found: category-${scrollTo}`
-        );
+        console.warn(`Categories.vue category element not found: category-${scrollTo}`);
       }
     });
   } else {
-    console.log(
-      "Categories.vue scrollToCategory, no scrollTo provided:",
-      scrollTo
-    );
+    console.log("Categories.vue scrollToCategory, no scrollTo provided:", scrollTo);
   }
 };
 
@@ -311,6 +268,15 @@ const handleSignOut = async () => {
     authStore.clearUser();
     router.replace("/");
   }
+};
+
+const cryptCat = async (cat) => {
+  // used
+  let pwd = authStore.currUser.pwd;
+  console.log("cryptCat", cat.enc, pwd);
+  if (cat.enc) {
+    await decryptCat(cat, pwd);
+  } else await encryptCat(cat, pwd);
 };
 </script>
 
