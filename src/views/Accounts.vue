@@ -71,11 +71,12 @@
         </v-row>
 
         <!-- search -->
+        <!-- :model-value="accountStore.searchQuery" -->
+        <!-- @update:modelValue="accountStore.searchQuery = $event" -->
         <v-row class="mx-0 px-0 my-0 pb-1" style="background-color: #f9f9f9">
           <v-col cols="12" class="pb-0">
             <v-text-field
-              :model-value="accountStore.searchQuery"
-              @update:modelValue="accountStore.searchQuery = $event"
+              v-model="accountStore.searchQuery"
               label="Search Providers"
               prepend-inner-icon="mdi-magnify"
               clearable
@@ -119,7 +120,7 @@
                 flat
                 outlined
                 class="transparent-btn close-btn"
-                @click.stop="accountStore.openAccountDialog(account, authStore.currUser.pwd)"
+                @click.stop="accountStore.openAccountDialog(account)"
               >
                 <v-icon>mdi-pencil-outline</v-icon>
               </v-btn>
@@ -145,12 +146,9 @@
         class="add-btn align-center justify-center"
         style="position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%)"
         @click="
-          accountStore.openAccountDialog(
-            {
-              categoryId: accountStore.selectedCatId,
-            },
-            authStore.currUser.pwd
-          )
+          accountStore.openAccountDialog({
+            categoryId: accountStore.selectedCatId,
+          })
         "
       >
         <v-icon>mdi-plus</v-icon>
@@ -177,16 +175,20 @@ import { useCategoryStore } from "@/stores/category";
 import AccountDialog from "@/components/AccountDialog.vue";
 import { useAuthStore } from "@/stores/auth";
 import { computed, onMounted, ref, watch, nextTick } from "vue";
-import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
+import { alertDialog } from "@/ui/dialogState.js";
 
 const router = useRouter();
 const route = useRoute();
 const accountStore = useAccountStore();
 const categoryStore = useCategoryStore();
 const authStore = useAuthStore();
+const menuOpen = ref(false);
+accountStore.setFilters([]);
+
+const categoryIdFromRoute = computed(() => route.query.id || "");
+const categoryName = computed(() => route.query.name || "");
 
 onMounted(async () => {
-  console.log("Accounts.vue mounted, accountStore.isLoaded:", accountStore.isLoaded);
   try {
     if (!accountStore.isLoaded) {
       await accountStore.subscribeToAccounts();
@@ -203,15 +205,8 @@ onMounted(async () => {
   }
 });
 
-const menuOpen = ref(false);
-accountStore.setFilters([]);
-
-const categoryIdFromRoute = computed(() => route.query.id || "");
-const categoryName = computed(() => route.query.name || "");
-
 const filteredAccounts = computed(() => {
   const accounts = accountStore.filteredAccounts;
-  console.log("Accounts.vue filteredAccounts", "selectedCatId:", accountStore.selectedCatId);
   return accounts;
 });
 
@@ -258,7 +253,6 @@ const scrollToAccount = (scrollTo) => {
           inline: "nearest",
         });
         element.classList.add("sheets-focus");
-        console.log(`Accounts.vue scrolled to account: ${scrollTo}`);
       } else {
         console.warn(`Accounts.vue account element not found: account-${scrollTo}`);
       }
@@ -273,7 +267,6 @@ watch(
   (newQuery) => {
     if (newQuery.scrollTo) {
       nextTick(() => {
-        console.log("Accounts.vue watch triggered, scrollTo:", newQuery.scrollTo, "ts:", newQuery.ts);
         scrollToAccount(newQuery.scrollTo);
       });
     } else {
@@ -286,7 +279,6 @@ watch(
 const handleSave = async (formData) => {
   try {
     const acctId = await accountStore.saveAccount(formData);
-    console.log("Accounts.vue saved account ID:", acctId);
     await nextTick();
     accountStore.closeAccountDialog();
     router.push({

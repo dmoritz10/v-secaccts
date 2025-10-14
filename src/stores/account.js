@@ -2,17 +2,15 @@ import { defineStore } from "pinia";
 import { computed, reactive, ref } from "vue";
 import { db } from "@/firebase";
 import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs } from "firebase/firestore";
-import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
+import { alertDialog } from "@/ui/dialogState.js";
 import { encryptMessage, decryptMessage } from "@/services/enc";
 import { encryptAccts, acctDBFlds } from "@/services/common";
 
 import { useCategoryStore } from "@/stores/category";
-import { useAuthStore } from "@/stores/auth";
 
-import { watch, nextTick } from "vue";
+import { watch } from "vue";
 
 export const useAccountStore = defineStore("account", () => {
-  const authStore = useAuthStore();
   const categoryStore = useCategoryStore();
 
   const state = reactive({
@@ -55,7 +53,6 @@ export const useAccountStore = defineStore("account", () => {
   const searchQuery = computed({
     get: () => state.searchQuery,
     set: (value) => {
-      console.log("Updating searchQuery:", value);
       state.searchQuery = value;
     },
   });
@@ -76,7 +73,6 @@ export const useAccountStore = defineStore("account", () => {
   const filteredAccounts = computed(() => {
     const filters = activeFilters.value;
     const catId = selectedCatId.value;
-    console.log("catId", catId, selectedCatId);
     // const catId = selectedCatId;
     const query = state.searchQuery ? state.searchQuery.toLowerCase().trim() : "";
     let filtered = state.items || [];
@@ -99,11 +95,9 @@ export const useAccountStore = defineStore("account", () => {
     // Filter by activeFilters
     if (filters.includes("favorite")) {
       filtered = filtered.filter((acct) => acct.favorite);
-      console.log("fav", filtered);
     }
     if (filters.includes("autoPay")) {
       filtered = filtered.filter((acct) => acct.autoPay != null);
-      console.log("autopay", filtered);
     }
 
     return filtered.sort((a, b) => (a.provider || "").localeCompare(b.provider || ""));
@@ -133,7 +127,6 @@ export const useAccountStore = defineStore("account", () => {
       }));
       state.items.sort((a, b) => (a.provider || "").localeCompare(b.provider || ""));
       state.isLoaded = true;
-      console.log("Initial accounts loaded:", state.items.length, "items:", state.items);
 
       console.log("Subscribing to accounts for real-time updates...");
       unsubscribeAccounts.value = onSnapshot(q, (snapshot) => {
@@ -156,18 +149,16 @@ export const useAccountStore = defineStore("account", () => {
           }
         });
 
-        console.log("snapshot", updates);
-
         updates.forEach(({ index, data, removeId }) => {
           if (removeId) {
             state.items = state.items.filter((item) => item.id !== removeId);
-            console.log("shapshot", "remove", removeId);
+            // console.log("shapshot", "remove", removeId);
           } else if (index === -1) {
             state.items.push(data);
-            console.log("shapshot", "add", index, data);
+            // console.log("shapshot", "add", index, data);
           } else {
             state.items[index] = data;
-            console.log("shapshot", "update", index, data);
+            // console.log("shapshot", "update", index, data);
           }
         });
         state.items.sort((a, b) => (a.provider || "").localeCompare(b.provider || ""));
@@ -193,13 +184,12 @@ export const useAccountStore = defineStore("account", () => {
   };
 
   const saveAccount = async (formData) => {
-    console.log("saveaccount", formData);
     try {
       const cat = categoryStore.state.items.find((cat) => cat.id === formData.categoryId);
 
       formData.lastChange = new Date().toDateString();
       if (!formData.enc && cat.enc) {
-        var encAccts = (await encryptAccts([formData], authStore.currUser.pwd))[0];
+        var encAccts = (await encryptAccts([formData]))[0];
         encAccts.enc = true;
       } else {
         var encAccts = formData;
@@ -210,11 +200,9 @@ export const useAccountStore = defineStore("account", () => {
 
       let docRef;
       if (formData.accountId) {
-        console.log("update", formData.accountId, dbFields);
         docRef = doc(db, "accounts", formData.accountId);
         await updateDoc(docRef, dbFields);
       } else {
-        console.log("add", formData.accountId);
         docRef = await addDoc(collection(db, "accounts"), dbFields);
       }
       return docRef.id;
@@ -237,7 +225,6 @@ export const useAccountStore = defineStore("account", () => {
 
   const deleteAccount = async (accountId) => {
     try {
-      console.log("Deleting account:", accountId);
       await deleteDoc(doc(db, "accounts", accountId));
       console.log("Account deleted:", accountId);
     } catch (error) {
@@ -247,10 +234,7 @@ export const useAccountStore = defineStore("account", () => {
   };
 
   async function toggleFavorite(accountId, currentValue, enc) {
-    console.log("toggleFavorite enc", enc);
-    const dateStamp = enc
-      ? await encryptMessage(new Date().toDateString(), authStore.currUser.pwd)
-      : new Date().toDateString();
+    const dateStamp = enc ? await encryptMessage(new Date().toDateString()) : new Date().toDateString();
     const accountRef = doc(db, "accounts", accountId);
     await updateDoc(accountRef, {
       favorite: !currentValue,
@@ -258,25 +242,25 @@ export const useAccountStore = defineStore("account", () => {
     });
   }
 
-  const openAccountDialog = async (account, pwd) => {
-    console.log("openAccountDialog account", account, pwd);
+  const openAccountDialog = async (account) => {
+    console.log("openAccountDialog account", account);
     dialog.value = true;
     state.formData = account.id
       ? {
           accountId: account.id,
           provider: account.provider,
-          accountNbr: account.enc ? await decryptMessage(account.accountNbr, pwd) : account.accountNbr,
-          autoPay: account.enc ? await decryptMessage(account.autoPay, pwd) : account.autoPay,
+          accountNbr: account.enc ? await decryptMessage(account.accountNbr) : account.accountNbr,
+          autoPay: account.enc ? await decryptMessage(account.autoPay) : account.autoPay,
           categoryId: account.categoryId,
           enc: account.enc,
-          login: account.enc ? await decryptMessage(account.login, pwd) : account.login,
-          loginUrl: account.enc ? await decryptMessage(account.loginUrl, pwd) : account.loginUrl,
-          notes: account.enc ? await decryptMessage(account.notes, pwd) : account.notes,
-          password: account.enc ? await decryptMessage(account.password, pwd) : account.password,
-          pinNbr: account.enc ? await decryptMessage(account.pinNbr, pwd) : account.pinNbr,
-          securityQA: account.enc ? await decryptMessage(account.securityQA, pwd) : account.securityQA,
+          login: account.enc ? await decryptMessage(account.login) : account.login,
+          loginUrl: account.enc ? await decryptMessage(account.loginUrl) : account.loginUrl,
+          notes: account.enc ? await decryptMessage(account.notes) : account.notes,
+          password: account.enc ? await decryptMessage(account.password) : account.password,
+          pinNbr: account.enc ? await decryptMessage(account.pinNbr) : account.pinNbr,
+          securityQA: account.enc ? await decryptMessage(account.securityQA) : account.securityQA,
           favorite: account.favorite,
-          lastChange: account.enc ? await decryptMessage(account.lastChange, pwd) : account.lastChange,
+          lastChange: account.enc ? await decryptMessage(account.lastChange) : account.lastChange,
         }
       : {
           accountId: null,
@@ -299,7 +283,6 @@ export const useAccountStore = defineStore("account", () => {
 
   const closeAccountDialog = () => {
     dialog.value = false;
-    console.log("Account dialog closed");
   };
 
   return {

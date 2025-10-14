@@ -114,7 +114,6 @@ async function verifyPassword(password, stored) {
     // If we reach this point without throwing, password is correct.
     // (Optional sanity check: decode the plaintext just to log it)
     const text = textDecoder.decode(decryptedVerifier);
-    console.log("Password verified ✅, verifier text:", text);
 
     return key; // derived AES key to use for encryption/decryption
   } catch (e) {

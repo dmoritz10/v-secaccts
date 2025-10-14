@@ -2,7 +2,31 @@
   <v-container class="pt-5 bg-grey-lighten-3">
     <v-sheet class="px-4 py-10 mb-5" elevation="5" rounded>
       <v-row class="align-center justify-center">
-        <h1 class="subtitle-1 grey--text text-center">Secure Accounts Authorization</h1>
+        <v-col cols="12" class="py-0 px-0">
+          <v-sheet class="mx-3 px-2 pt-3 pb-3 mt-1 mb-0" rounded>
+            <v-row class="align-center">
+              <v-col cols="1"></v-col>
+              <v-col class="text-center">
+                <h1 class="subtitle-1 grey--text text-center">Secure Accounts Authorization</h1>
+              </v-col>
+              <!-- Sandwich / 3-dot menu -->
+              <v-col cols="1" class="d-flex justify-end">
+                <v-menu location="bottom-end">
+                  <template #activator="{ props }">
+                    <v-btn icon v-bind="props" variant="text">
+                      <v-icon>mdi-dots-vertical</v-icon>
+                    </v-btn>
+                  </template>
+                  <v-list>
+                    <v-list-item @click="restoreAllSheets">
+                      <v-list-item-title>Restore DB from Backup</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+              </v-col>
+            </v-row>
+          </v-sheet>
+        </v-col>
       </v-row>
     </v-sheet>
     <v-row class="my-10" justify="center">
@@ -39,6 +63,7 @@ import { getOption, getUser } from "../services/common";
 import { alertDialog } from "@/ui/dialogState.js";
 import { initializeVerifier, verifyPassword } from "../services/enc.js";
 import { setKey, clearKey } from "@/services/keyVault";
+import { restoreAllSheets } from "@/services/restoreDB";
 
 const router = useRouter();
 const authStore = useAuthStore();

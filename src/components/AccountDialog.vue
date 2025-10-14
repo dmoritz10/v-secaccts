@@ -1,5 +1,6 @@
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue')" max-width="600">
+  <!-- <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue')" max-width="600"> -->
+  <v-dialog v-model="modelValue" max-width="500px" persistent>
     <v-card>
       <v-card-title>{{ formData.accountId ? "Edit Account" : "Add Account" }} </v-card-title>
       <v-card-text>
@@ -56,7 +57,7 @@
 // import { defineProps, defineEmits } from "vue";
 import { useCategoryStore } from "@/stores/category";
 import { useAccountStore } from "@/stores/account";
-import { ref, onMounted, computed } from "vue";
+import { ref, computed } from "vue";
 
 const categoryStore = useCategoryStore();
 const accountStore = useAccountStore();
@@ -87,22 +88,21 @@ const providerExistsRule = computed(() => {
 
 async function saveEdit($event) {
   const { valid } = await editForm.value?.validate();
-  console.log(valid);
 
   if (valid) {
-    console.log("valid");
     emit("save", props.formData);
   }
 }
+const modelValue = defineModel();
 
 const props = defineProps({
-  modelValue: { type: Boolean, required: true },
+  // modelValue: { type: Boolean, required: true },
   formData: {
     type: Object,
     required: true,
   },
 });
-console.log("AccountDialog", props.formData);
 
-const emit = defineEmits(["update:modelValue", "save", "cancel"]);
+// const emit = defineEmits(["update:modelValue", "save", "cancel"]);
+const emit = defineEmits(["save", "cancel"]);
 </script>

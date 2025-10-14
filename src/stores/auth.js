@@ -1,4 +1,4 @@
-import { ref, reactive } from "vue";
+import { reactive } from "vue";
 import { defineStore } from "pinia";
 
 export const useAuthStore = defineStore("auth", () => {
@@ -7,7 +7,6 @@ export const useAuthStore = defineStore("auth", () => {
     email: null,
     uid: null,
     userName: null,
-    pwd: null,
     admin: false,
   });
 
@@ -16,7 +15,6 @@ export const useAuthStore = defineStore("auth", () => {
     currUser.email = userData.email || null;
     currUser.uid = userData.uid || null;
     currUser.userName = userData.userName || null;
-    currUser.pwd = userData.pwd || null;
     currUser.admin = userData.admin || false;
   };
 
@@ -25,7 +23,6 @@ export const useAuthStore = defineStore("auth", () => {
     currUser.email = null;
     currUser.uid = null;
     currUser.userName = null;
-    currUser.pwd = null;
     currUser.admin = false;
   };
 

@@ -1,5 +1,6 @@
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue')" max-width="500px" persistent>
+  <!-- <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue')" max-width="500px" persistent> -->
+  <v-dialog v-model="modelValue" max-width="500px" persistent>
     <v-card>
       <v-card-title>
         {{ formData.categoryId ? "Edit Category" : "Add Category" }}
@@ -31,23 +32,24 @@ const editForm = ref(null);
 
 async function saveEdit($event) {
   const { valid } = await editForm.value?.validate();
-  console.log(valid);
 
   if (valid) {
-    console.log("valid");
     emit("save", props.formData);
   }
 }
+
+const modelValue = defineModel();
 const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    required: true,
-  },
+  // modelValue: {
+  //   type: Boolean,
+  //   required: true,
+  // },
   formData: {
     type: Object,
     required: true,
   },
 });
 
-const emit = defineEmits(["update:modelValue", "save", "cancel"]);
+// const emit = defineEmits(["update:modelValue", "save", "cancel"]);
+const emit = defineEmits(["save", "cancel"]);
 </script>

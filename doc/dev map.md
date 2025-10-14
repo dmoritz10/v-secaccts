@@ -10,3 +10,10 @@
         * doc types
 
 ---
+
+firebase deploy
+firebase init
+firebase deploy
+
+firebase serve --only hosting
+firebase deploy --only hosting

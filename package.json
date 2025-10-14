@@ -13,6 +13,7 @@
     "@vueuse/core": "^13.6.0",
     "date-fns": "^4.1.0",
     "firebase": "^11.9.1",
+    "marked": "^16.4.0",
     "pinia": "^3.0.3",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1",

@@ -1,16 +1,12 @@
 import { defineStore } from "pinia";
 import { computed, reactive, ref, nextTick } from "vue";
 import { db } from "@/firebase";
-import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDocs } from "firebase/firestore";
+import { collection, query, onSnapshot, addDoc, updateDoc, doc, getDocs, where, writeBatch } from "firebase/firestore";
 import { useAccountStore } from "./account";
-import { useAuthStore } from "./auth";
-// import { encyptCat, decyptCat } from "@/services/common";
-
-import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
+import { toast, alertDialog, confirmDialog } from "@/ui/dialogState.js";
 
 export const useCategoryStore = defineStore("category", () => {
   const accountStore = useAccountStore();
-  const authStore = useAuthStore();
 
   const state = reactive({
     items: [],
@@ -26,15 +22,14 @@ export const useCategoryStore = defineStore("category", () => {
   const dialog = ref(false);
   const unsubscribeCategories = ref(null);
   let isInitialLoad = true;
-
   const isLoaded = computed(() => state.isLoaded);
   const searchQuery = computed({
     get: () => state.searchQuery,
     set: (value) => {
-      console.log("Updating searchQuery:", value);
       state.searchQuery = value;
     },
   });
+
   const numberOfFilteredCategories = computed(() => filteredCategories.value?.length || 0);
 
   const filteredCategories = computed(() => {
@@ -53,7 +48,6 @@ export const useCategoryStore = defineStore("category", () => {
       return hasMatchingAccount;
     });
 
-    console.log("Filtered categories:", filtered.length);
     return filtered.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   });
 
@@ -129,15 +123,12 @@ export const useCategoryStore = defineStore("category", () => {
   };
 
   const categoryNameFor = (categoryId) => {
-    console.log("categoryNameFor", categoryId);
     const category = state.items.find((cat) => cat.id === categoryId);
-    console.log("categoryNameFor", categoryId, category, state.items);
     return category ? category.name : "N/A";
   };
 
   const saveCategory = async () => {
     try {
-      console.log("Saving category:", { ...state.formData });
       const { categoryId, name, enc } = state.formData;
       if (!name) throw new Error("Category name is required");
 
@@ -145,10 +136,8 @@ export const useCategoryStore = defineStore("category", () => {
       if (categoryId) {
         docRef = doc(db, "categories", categoryId);
         await updateDoc(docRef, { name, enc });
-        console.log("Category updated:", categoryId);
       } else {
         docRef = await addDoc(collection(db, "categories"), { name, enc });
-        console.log("Category added:", docRef.id);
       }
       await nextTick();
       closeCategoryDialog();
@@ -162,10 +151,36 @@ export const useCategoryStore = defineStore("category", () => {
   };
 
   const deleteCategory = async (categoryId) => {
+    var catName = categoryNameFor(categoryId);
+    const accountsRef = collection(db, "accounts");
+    const q = query(accountsRef, where("categoryId", "==", categoryId));
+    const accts = await getDocs(q);
+    console.log("accts", accts);
+    if (accts.docs.length) {
+      var msg = `This category is linked to ${accts.docs.length} accounts. Deleting it will also delete these accounts.  <br><br>Continue with deletion ?`;
+      var confirmOK = await confirmDialog(`Delete Category ${catName}`, msg);
+      if (!confirmOK) return;
+    }
+
+    const batch = writeBatch(db);
+
     try {
-      console.log("Deleting category:", categoryId);
-      await deleteDoc(doc(db, "categories", categoryId));
-      console.log("Category deleted:", categoryId);
+      console.log(`Deleting all accounts for categoryId: ${categoryId}...`);
+
+      // Add each account doc to batch delete
+      accts.forEach((docSnap) => {
+        batch.delete(docSnap.ref);
+      });
+
+      // Delete the category document itself
+      const categoryRef = doc(db, "categories", categoryId);
+      batch.delete(categoryRef);
+
+      // Commit all deletions
+      await batch.commit();
+
+      toast(`Category ${catName} deleted`);
+      console.log(`✅ Deleted category ${catName} and ${accts.size} accounts`);
     } catch (error) {
       console.error("Error deleting category:", error);
       alertDialog("Error deleting category", error);
@@ -177,13 +192,11 @@ export const useCategoryStore = defineStore("category", () => {
     state.formData = category
       ? { categoryId: category.id, name: category.name, enc: category.enc }
       : { categoryId: null, name: "", enc: false };
-    console.log("Opening category dialog:", state.formData);
   };
 
   const closeCategoryDialog = () => {
     dialog.value = false;
     state.formData = { categoryId: null, name: "", enc: false };
-    console.log("Category dialog closed");
   };
 
   return {

@@ -33,6 +33,10 @@
                       <v-list-item @click="goToAllAccounts">
                         <v-list-item-title>Show all Accounts</v-list-item-title>
                       </v-list-item>
+                      <v-list-item @click="about">
+                        <v-list-item-title>About</v-list-item-title>
+                      </v-list-item>
+                      <v-divider></v-divider>
                       <v-list-item @click="handleSignOut">
                         <v-list-item-title>Sign out</v-list-item-title>
                       </v-list-item>
@@ -52,11 +56,12 @@
         </v-row>
 
         <!-- search -->
+        <!-- :model-value="categoryStore.searchQuery" -->
+        <!-- @update:modelValue="categoryStore.searchQuery = $event" -->
         <v-row class="mx-0 px-0 my-0 pb-1" style="background-color: #f9f9f9">
           <v-col cols="12" class="pb-0">
             <v-text-field
-              :model-value="categoryStore.searchQuery"
-              @update:modelValue="categoryStore.searchQuery = $event"
+              v-model="categoryStore.searchQuery"
               label="Search Categories by Account Providers"
               prepend-inner-icon="mdi-magnify"
               clearable
@@ -142,7 +147,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, nextTick, onMounted } from "vue";
+import { ref, watch, nextTick, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useCategoryStore } from "@/stores/category";
 import { useAccountStore } from "@/stores/account";
@@ -151,8 +156,10 @@ import { auth } from "../firebase";
 import { signOut } from "firebase/auth";
 import CategoryDialog from "@/components/CategoryDialog.vue";
 import PasswordChangeDialog from "@/components/PasswordChangeDialog.vue";
-import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
+import { alertDialog } from "@/ui/dialogState.js";
 import { encryptCat, decryptCat } from "@/services/common";
+import { clearKey } from "@/services/keyVault";
+import { marked } from "marked";
 
 const router = useRouter();
 const route = useRoute();
@@ -166,18 +173,15 @@ function openChangePasswordDialog() {
 }
 
 onMounted(async () => {
-  console.log("key", authStore.currUser.pwd);
   console.log("Categories.vue mounted, isLoaded:", categoryStore.isLoaded);
   try {
     await categoryStore.subscribeToCategories();
-    console.log("Categories.vue subscribed, isLoaded:", categoryStore.isLoaded);
   } catch (error) {
     console.error("Categories.vue subscribeToCategories failed:", error);
     alertDialog("Categories.vue subscribeToCategories failed", error);
   }
   try {
     await accountStore.subscribeToAccounts();
-    console.log("accountStore subscribed, isLoaded:", accountStore.isLoaded);
   } catch (error) {
     console.error("accountStore subscribeToAccounts failed:", error);
     alertDialog("accountStore subscribeToAccounts failed", error);
@@ -202,12 +206,9 @@ watch(
 // Navigate to a specific category
 const goToCategoryAccounts = (catId) => {
   // Set categoryId in the store
-
   accountStore.selectedCatId = catId;
-
   // Reset filters so no previous filter is applied
   accountStore.setFilters([]);
-
   // Navigate to Accounts.vue
   router.push({
     path: `/accounts`,
@@ -223,10 +224,8 @@ const goToCategoryAccounts = (catId) => {
 const goToAllAccounts = () => {
   // Clear categoryId in the store to show all accounts
   accountStore.selectedCatId = "";
-
   // Reset filters
   accountStore.setFilters([]);
-
   // Navigate to Accounts.vue
   router.push("/accounts");
 };
@@ -247,7 +246,6 @@ const scrollToCategory = (scrollTo) => {
           inline: "nearest",
         });
         element.classList.add("sheets-focus");
-        console.log(`Categories.vue scrolled to category: ${scrollTo}`);
       } else {
         console.warn(`Categories.vue category element not found: category-${scrollTo}`);
       }
@@ -261,22 +259,30 @@ const handleSignOut = async () => {
   try {
     await signOut(auth);
     authStore.clearUser();
+    clearKey();
     router.replace("/");
     console.log("Sign-out successful");
   } catch (error) {
     console.error("Sign-out error:", error);
     authStore.clearUser();
+    clearKey();
     router.replace("/");
   }
 };
 
 const cryptCat = async (cat) => {
-  // used
-  let pwd = authStore.currUser.pwd;
-  console.log("cryptCat", cat.enc, pwd);
   if (cat.enc) {
-    await decryptCat(cat, pwd);
-  } else await encryptCat(cat, pwd);
+    await decryptCat(cat);
+  } else await encryptCat(cat);
+};
+
+const about = async () => {
+  const res = await fetch("/about.md");
+  if (!res.ok) throw new Error(`HTTP ${res.status} while fetching about.md`);
+  const markdown = await res.text();
+  // Convert Markdown → HTML
+  const html = marked.parse(markdown);
+  alertDialog("About Secure Accounts", html);
 };
 </script>
 

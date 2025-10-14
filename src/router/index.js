@@ -20,7 +20,6 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from, next) => {
-  console.log("beforeEach", to, from, next);
   const authStore = useAuthStore();
 
   // Wait for Firebase auth to initialize
@@ -35,11 +34,8 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.requiresAuth && !isAuthenticated) {
     // Clear authStore to ensure fresh state on redirect to login
     authStore.clearUser();
-    console.log("next");
     next("/");
   } else {
-    console.log("next");
-
     next();
   }
 });

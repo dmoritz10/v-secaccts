@@ -34,13 +34,9 @@ import { toast, alertDialog, blockScreen, unblockScreen } from "@/ui/dialogState
 import { db } from "@/firebase";
 
 import { encryptAccts, decryptAccts, acctDBFlds } from "@/services/common";
-import { encryptMessage, verifyPassword, initializeVerifier, deriveKey } from "@/services/enc";
-import { useAuthStore } from "@/stores/auth";
-import { useAccountStore } from "@/stores/account";
+import { verifyPassword, initializeVerifier, deriveKey } from "@/services/enc";
 import { setKey, clearKey } from "@/services/keyVault";
-
-const authStore = useAuthStore();
-const accountStore = useAccountStore();
+import { useAccountStore } from "@/stores/account";
 
 const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})");
 const invalidPwdMsg = `Passwords must contain at least
@@ -50,6 +46,8 @@ const invalidPwdMsg = `Passwords must contain at least
     1 special character and
     8 characters
     `;
+
+const accountStore = useAccountStore();
 
 const show = ref(false);
 const currentPwd = ref("");
@@ -131,9 +129,9 @@ async function submit() {
 
   const reEncAccts = await encryptAccts(decAccts);
 
-  // accountStore.unsubscribeFromAccounts();
+  accountStore.unsubscribeFromAccounts();
   const bUpd = await updateAccts(reEncAccts, true);
-  // accountStore.subscribeToAccounts();
+  accountStore.subscribeToAccounts();
 
   unblockScreen();
 

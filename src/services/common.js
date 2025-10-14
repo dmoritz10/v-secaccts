@@ -1,9 +1,8 @@
 import { db } from "@/firebase";
 import { collection, doc, query, getDocs, where, updateDoc, addDoc, writeBatch, orderBy } from "firebase/firestore";
-
 import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
-
 import { encryptMessage, decryptMessage } from "@/services/enc";
+import Accounts from "@/views/Accounts.vue";
 
 export const acctEncFlds = [
   "accountNbr",
@@ -73,8 +72,6 @@ async function getOption(keyValue) {
     const q = query(options, where("key", "==", keyValue));
     const querySnapshot = await getDocs(q);
 
-    console.log("query", querySnapshot, querySnapshot.docs[0].data().value);
-
     if (querySnapshot.empty) {
       return null;
     }
@@ -109,10 +106,9 @@ async function updateOption(key, val) {
   }
 }
 
-async function encryptCat(cat, pwd) {
+async function encryptCat(cat) {
   // used
-  console.log("encryptCat", cat);
-  // console.time("encryptCat");
+  console.log("encryptCat");
 
   blockScreen();
 
@@ -126,14 +122,14 @@ async function encryptCat(cat, pwd) {
 
   if (!decAccts.length) {
     alertDialog("Encrypt Category", `Category ${cat.name} has no decrypted accounts`);
-    cat.enc = true;
+    updateDoc(doc(db, "categories", cat.id), { enc: true });
     unblockScreen();
     return;
   }
 
   toast(`Encrypting ${cat.name}`, 5000);
 
-  let encArr = await encryptAccts(decAccts, pwd);
+  let encArr = await encryptAccts(decAccts);
 
   const bUpd = await updateAccts(encArr, true, true);
 
@@ -143,11 +139,10 @@ async function encryptCat(cat, pwd) {
 
   unblockScreen();
 
-  console.log("encryptCat:", accts.length);
   console.timeEnd("encryptCat");
 }
 
-async function decryptCat(cat, pwd) {
+async function decryptCat(cat) {
   // used
   // console.time("decryptCat");
   const confirmOK = await confirmDialog(
@@ -161,7 +156,6 @@ async function decryptCat(cat, pwd) {
   }
   blockScreen("Decryption underway");
 
-  const ref = doc(db, "categories", cat.id);
   const col = collection(db, "accounts");
   const q = query(col, where("categoryId", "==", cat.id));
   const getAccts = await getDocs(q);
@@ -171,14 +165,14 @@ async function decryptCat(cat, pwd) {
   const encAccts = accts.filter((acct) => acct.enc);
   if (!encAccts.length) {
     alertDialog("Decrypt Category", `Category ${cat.name} has no encrypted accounts`);
-    cat.enc = false;
+    updateDoc(doc(db, "categories", cat.id), { enc: false });
     unblockScreen();
     return;
   }
 
   toast(`Decrypting ${cat.name}`, 0);
 
-  let encArr = await decryptAccts(encAccts, pwd);
+  let encArr = await decryptAccts(encAccts);
 
   const bUpd = await updateAccts(encArr, false, true);
 
@@ -192,9 +186,9 @@ async function decryptCat(cat, pwd) {
   console.timeEnd("decryptCat");
 }
 
-async function encryptAccts(accts, pwd) {
+async function encryptAccts(accts) {
   // used
-  console.log("encryptAccts", pwd);
+  console.log("encryptAccts");
 
   try {
     // Initialize result array with same structure
@@ -206,7 +200,7 @@ async function encryptAccts(accts, pwd) {
         // .filter(([key, value]) => acctEncFlds.includes(key) && value !== null)
         .filter(([key, value]) => acctEncFlds.includes(key))
         .map(([key, value]) =>
-          encryptMessage(value, pwd).then((encrypted) => ({
+          encryptMessage(value).then((encrypted) => ({
             objIndex,
             key,
             encrypted,
@@ -231,16 +225,18 @@ async function encryptAccts(accts, pwd) {
   }
 }
 
-async function decryptAcctReactive(acct, pwd) {
+async function decryptAcctReactive(acct) {
   //used
+  // console.log("decryptAcctReactive", Accounts);
+  // console.trace("Change stack trace:");
   for (const key in acct) {
     if (acctEncFlds.indexOf(key) > -1) {
-      acct[key] = await decryptMessage(acct[key], pwd); // ✅ mutate property, reactivity preserved
+      acct[key] = await decryptMessage(acct[key]); // ✅ mutate property, reactivity preserved
     }
   }
 }
 
-async function decryptAccts(accts, pwd) {
+async function decryptAccts(accts) {
   //used
   console.log("decryptAccts");
 
@@ -254,7 +250,7 @@ async function decryptAccts(accts, pwd) {
         // .filter(([key, value]) => acctEncFlds.includes(key) && value !== null)
         .filter(([key, value]) => acctEncFlds.includes(key))
         .map(([key, value]) =>
-          decryptMessage(value, pwd).then((decrypted) => ({
+          decryptMessage(value).then((decrypted) => ({
             objIndex,
             key,
             decrypted,

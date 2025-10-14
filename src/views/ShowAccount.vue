@@ -231,11 +231,8 @@ import { useCategoryStore } from "@/stores/category";
 import AccountDialog from "@/components/AccountDialog.vue";
 
 import { decryptAcctReactive } from "@/services/common";
-import { useAuthStore } from "@/stores/auth";
 import { until } from "@vueuse/core";
-import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
-
-const authStore = useAuthStore();
+import { toast, alertDialog } from "@/ui/dialogState.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -248,10 +245,13 @@ const currentAccountIsLoaded = ref(false);
 
 // Compute the index reactively
 const idx = computed(() => accountStore.state.items.findIndex((acct) => acct.id === route.params.accountId));
+
 // One-way reactive computed ref
 const currentAccount = computed(() => {
   const acct = accountStore.state.items[idx.value];
-  return acct ? { ...acct } : null; // shallow clone breaks reference
+  const rtn = acct ? { ...acct } : null; // shallow clone breaks reference
+  console.log("currentAccount", rtn);
+  return rtn;
 });
 
 watch(currentAccount, async () => {
@@ -259,12 +259,11 @@ watch(currentAccount, async () => {
   currentAccountIsLoaded.value = false;
   // console.trace("Change stack trace:");
   if (currentAccount.value.enc) {
-    await decryptAcctReactive(currentAccount.value, authStore.currUser.pwd);
+    await decryptAcctReactive(currentAccount.value);
     // Mark as decrypted
     currentAccount.value.enc = false;
   }
   currentAccountIsLoaded.value = true;
-  console.log("watch decrypt", { ...currentAccount.value });
 });
 
 const filteredAccounts = computed(() => accountStore.filteredAccounts);
@@ -295,18 +294,17 @@ const copyToClipboard = async (text, fieldName) => {
 };
 
 onMounted(async () => {
-  console.log("ShowAccount onMounted", { ...currentAccount.value });
+  console.log("ShowAccount onMounted");
 
   // Wait until currentAccount is defined
   await until(() => accountStore.state.items.length > 0);
 
   // If encrypted, decrypt in place
   if (currentAccount.value.enc) {
-    await decryptAcctReactive(currentAccount.value, authStore.currUser.pwd);
+    await decryptAcctReactive(currentAccount.value);
     // Mark as decrypted
     currentAccount.value.enc = false;
   }
-  console.log("ShowAccount onMounted after", { ...currentAccount.value });
 
   // Now data is ready for template
   currentAccountIsLoaded.value = true;
@@ -314,12 +312,6 @@ onMounted(async () => {
 });
 
 const returnToAccounts = () => {
-  console.log("returnToAccounts", currentAccount.value, {
-    id: currentAccount.value.categoryId,
-    name: categoryStore.categoryNameFor(currentAccount.value.categoryId),
-    scrollTo: currentAccount.value.id,
-    ts: Date.now(),
-  });
   router.push({
     path: "/accounts",
     query: {
@@ -333,12 +325,10 @@ const returnToAccounts = () => {
 
 const navigateToAccount = (accountId) => {
   if (!accountId) return;
-  console.log("ShowAccount.vue navigateToAccount, accountId:", accountId);
   router.push({ path: `/account/${accountId}`, query: route.query });
 };
 
 const openUpdateDialog = (account) => {
-  console.log("openUpdateDialog", account, account.provider);
   accountStore.openAccountDialog(account);
 };
 

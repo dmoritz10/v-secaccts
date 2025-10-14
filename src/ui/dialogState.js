@@ -5,6 +5,14 @@ export const state = reactive({
   alert: { visible: false, title: "", message: "" },
   confirm: { visible: false, title: "", message: "", resolve: null },
   block: { visible: false, message: "" },
+  prompt: {
+    visible: false,
+    title: "",
+    message: "",
+    label: "",
+    input: "",
+    resolve: null,
+  },
 });
 
 // Snackbar
@@ -30,6 +38,17 @@ export const confirmDialog = (title, message) =>
     state.confirm.visible = true;
     state.confirm.resolve = resolve;
   });
+
+export function promptDialog(title, message, label = "Enter value") {
+  return new Promise((resolve) => {
+    state.prompt.title = title;
+    state.prompt.message = message;
+    state.prompt.label = label;
+    state.prompt.input = "";
+    state.prompt.visible = true;
+    state.prompt.resolve = resolve;
+  });
+}
 
 // Block overlay
 export const blockScreen = (message) => {
