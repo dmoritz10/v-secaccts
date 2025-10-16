@@ -250,7 +250,6 @@ const idx = computed(() => accountStore.state.items.findIndex((acct) => acct.id 
 const currentAccount = computed(() => {
   const acct = accountStore.state.items[idx.value];
   const rtn = acct ? { ...acct } : null; // shallow clone breaks reference
-  console.log("currentAccount", rtn);
   return rtn;
 });
 

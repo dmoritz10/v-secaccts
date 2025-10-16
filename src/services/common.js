@@ -1,5 +1,16 @@
 import { db } from "@/firebase";
-import { collection, doc, query, getDocs, where, updateDoc, addDoc, writeBatch, orderBy } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  query,
+  getDocs,
+  getDoc,
+  where,
+  updateDoc,
+  addDoc,
+  writeBatch,
+  orderBy,
+} from "firebase/firestore";
 import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
 import { encryptMessage, decryptMessage } from "@/services/enc";
 import Accounts from "@/views/Accounts.vue";
@@ -47,17 +58,18 @@ async function getAccts() {
   return accts;
 }
 
-async function getUser(userName) {
+async function getUser(uid) {
   // used
+
+  console.log("getUser", uid);
   try {
-    const users = collection(db, "users");
-    const q = query(users, where("name", "==", userName));
-    const snapshot = await getDocs(q);
+    const docRef = doc(db, "users", uid);
+    const snapshot = await getDoc(docRef);
 
     if (snapshot.empty) {
       return null;
     }
-    const userDoc = snapshot.docs[0].data(); // Get first matching document
+    const userDoc = snapshot.data(); // Get first matching document
     return userDoc;
   } catch (error) {
     console.log("getUser error", error);

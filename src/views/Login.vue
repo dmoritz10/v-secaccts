@@ -37,8 +37,9 @@
       <v-card class="pa-5">
         <v-card-title class="text-h5">Sign in Verification</v-card-title>
         <v-form ref="form">
-          <v-text-field v-model="usr" label="User" required></v-text-field>
-          <v-text-field type="password" v-model="pwd" label="Password" required></v-text-field>
+          <!-- <v-text-field v-model="usr" label="User" required></v-text-field> -->
+          <v-card-text>{{ greeting }}</v-card-text>
+          <v-text-field type="password" v-model="pwd" ref="pwdFocus" label="Password" required></v-text-field>
           <v-card-text>
             <div v-html="msg"></div>
           </v-card-text>
@@ -67,8 +68,10 @@ import { restoreAllSheets } from "@/services/restoreDB";
 
 const router = useRouter();
 const authStore = useAuthStore();
-const usr = ref("dmoritz10");
-const pwd = ref("Tempdm101!");
+const greeting = ref("Welcome");
+
+const pwd = ref("");
+const pwdFocus = ref(null);
 const dialogLogin = ref(false);
 const msg = ref("&nbsp;");
 
@@ -88,26 +91,38 @@ onMounted(async () => {
           email: user.email,
           uid: user.uid,
         });
+        greeting.value = `Hi ${user.displayName.split(" ")[0]}`;
         dialogLogin.value = true;
+        console.log("onAuthStateChanged", user, authStore);
       } else {
         // No Firebase user, clear store and keep dialog closed
         authStore.clearUser();
         dialogLogin.value = false;
+        console.log("onAuthStateChanged", "no firebase user");
       }
       unsubscribe();
       resolve();
     });
   });
+
+  pwdFocus.value?.focus();
+
   console.log("Login.vue. onMounted complete");
 });
 
 const signIn = async () => {
+  console.log("signIn", authStore);
+
   try {
-    await signInWithPopup(auth, provider);
+    const googleUser = await signInWithPopup(auth, provider);
+    authStore.setUser({
+      name: googleUser.user.displayName,
+      email: googleUser.user.email,
+      uid: googleUser.user.uid,
+    });
     dialogLogin.value = true;
     // onAuthStateChanged handles setting user data and showing dialog
   } catch (error) {
-    console.error("signInWithPopup error:", error.message);
     authStore.clearUser();
     dialogLogin.value = false;
   }
@@ -116,12 +131,12 @@ const signIn = async () => {
 const clearDialog = () => {
   dialogLogin.value = false;
   msg.value = "&nbsp;";
-  usr.value = "";
   pwd.value = "";
   authStore.clearUser();
 };
 
 async function submit() {
+  console.log("submit", authStore);
   msg.value = "&nbsp;";
 
   // One-time routine to initialize the vault option
@@ -144,7 +159,8 @@ async function submit() {
     return;
   }
 
-  const userAuth = await getUser(usr.value.toLowerCase());
+  const userAuth = await getUser(authStore.currUser.uid);
+
   if (!userAuth) {
     msg.value = "Invalid Login";
     authStore.clearUser();
@@ -168,7 +184,7 @@ async function submit() {
   // Update currUser with verified credentials
   authStore.setUser({
     ...authStore.currUser,
-    userName: usr.value.toLowerCase(),
+    userName: userAuth.name,
     admin: userAuth.admin,
   });
 
