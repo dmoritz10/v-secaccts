@@ -138,46 +138,5 @@ async function submit() {
   toast("Change of password is complete", 3000);
 }
 
-// async function updateAcctsAndOption(accts, enc, encPwd) {
-//   console.time("updateAccts");
-//   const batch = writeBatch(db);
-
-//   for (let i = 0; i < accts.length; i++) {
-//     let acct = accts[i];
-//     const docRef = doc(db, "accounts", acct.id);
-//     for (const key in acct) {
-//       // remove non-db elements from acct
-//       if (acctDBFlds.indexOf(key) == -1) delete acct[key];
-//     }
-//     acct["enc"] = enc;
-//     batch.update(docRef, acct);
-//   }
-
-//   const options = collection(db, "options");
-//   const q = query(options, where("key", "==", "shtList"));
-//   const querySnapshot = await getDocs(q);
-//   const optionId = querySnapshot.docs[0].id; // Get first matching document
-//   console.log("optionId", querySnapshot.docs[0], optionId);
-//   const updateRef = doc(db, "options", optionId);
-//   batch.update(updateRef, { value: encPwd });
-
-//   let rtn = batch
-//     .commit()
-//     .then((result) => {
-//       console.log("updateAccts: ", accts.length);
-//       console.timeEnd("updateAccts");
-//       console.log("Batch update successful!");
-
-//       return result;
-//     })
-//     .catch((error) => {
-//       console.error("Batch update failed: ", error);
-//       alertDialog("Batch update failed", error);
-//       return error;
-//     });
-
-//   return rtn;
-// }
-
 defineExpose({ open });
 </script>

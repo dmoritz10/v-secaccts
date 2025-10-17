@@ -40,6 +40,9 @@
                       <v-list-item @click="handleSignOut">
                         <v-list-item-title>Sign out</v-list-item-title>
                       </v-list-item>
+                      <v-list-item @click="debugAuth">
+                        <v-list-item-title>Debug userAuth</v-list-item-title>
+                      </v-list-item>
                     </v-list>
                   </v-menu>
                 </v-col>
@@ -153,13 +156,15 @@ import { useCategoryStore } from "@/stores/category";
 import { useAccountStore } from "@/stores/account";
 import { useAuthStore } from "@/stores/auth";
 import { auth } from "../firebase";
-import { signOut } from "firebase/auth";
+import { signOut, getIdToken } from "firebase/auth";
 import CategoryDialog from "@/components/CategoryDialog.vue";
 import PasswordChangeDialog from "@/components/PasswordChangeDialog.vue";
 import { alertDialog } from "@/ui/dialogState.js";
 import { encryptCat, decryptCat } from "@/services/common";
 import { clearKey } from "@/services/keyVault";
 import { marked } from "marked";
+import { getStorage } from "firebase/storage";
+import { getApp } from "firebase/app";
 
 const router = useRouter();
 const route = useRoute();
@@ -284,6 +289,16 @@ const about = async () => {
   const html = marked.parse(markdown);
   alertDialog("About Secure Accounts", html);
 };
+
+async function debugAuth() {
+  auth.currentUser
+    ?.getIdToken(true)
+    .then((token) => console.log("Token refreshed successfully"))
+    .catch((err) => console.error("Token refresh failed", err));
+
+  const storage = getStorage(getApp());
+  console.log("Resolved bucket:", storage.bucket);
+}
 </script>
 
 <style scoped>

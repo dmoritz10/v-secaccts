@@ -1,5 +1,7 @@
-import { reactive } from "vue";
 import { defineStore } from "pinia";
+import { reactive } from "vue";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/firebase"; // adjust your path
 
 export const useAuthStore = defineStore("auth", () => {
   const currUser = reactive({
@@ -10,21 +12,21 @@ export const useAuthStore = defineStore("auth", () => {
     admin: false,
   });
 
-  const setUser = (userData) => {
-    currUser.name = userData.name || null;
-    currUser.email = userData.email || null;
-    currUser.uid = userData.uid || null;
-    currUser.userName = userData.userName || null;
-    currUser.admin = userData.admin || false;
-  };
+  const setUser = (userData) => Object.assign(currUser, userData);
+  const clearUser = () => Object.keys(currUser).forEach((k) => (currUser[k] = null));
 
-  const clearUser = () => {
-    currUser.name = null;
-    currUser.email = null;
-    currUser.uid = null;
-    currUser.userName = null;
-    currUser.admin = false;
-  };
+  // Keep in sync with Firebase automatically
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      setUser({
+        name: user.displayName,
+        email: user.email,
+        uid: user.uid,
+      });
+    } else {
+      clearUser();
+    }
+  });
 
-  return { clearUser, setUser, currUser };
+  return { currUser, setUser, clearUser };
 });
