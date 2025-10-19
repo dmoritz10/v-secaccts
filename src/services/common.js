@@ -60,8 +60,6 @@ async function getAccts() {
 
 async function getUser(uid) {
   // used
-
-  console.log("getUser", uid);
   try {
     const docRef = doc(db, "users", uid);
     const snapshot = await getDoc(docRef);

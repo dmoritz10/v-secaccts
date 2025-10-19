@@ -163,7 +163,8 @@ async function submit() {
 
   if (!userAuth) {
     msg.value = "Invalid Login";
-    authStore.clearUser();
+    // authStore.clearUser();
+    console.log("1", authStore.currUser);
     clearKey();
     return;
   }
@@ -174,7 +175,9 @@ async function submit() {
 
   if (!key) {
     msg.value = "Invalid Login";
-    authStore.clearUser();
+    console.log("2", authStore.currUser);
+
+    // authStore.clearUser();
     clearKey();
     return;
   }

@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { reactive } from "vue";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "@/firebase"; // adjust your path
+import { auth } from "@/firebase";
 
 export const useAuthStore = defineStore("auth", () => {
   const currUser = reactive({

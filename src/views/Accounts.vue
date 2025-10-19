@@ -103,10 +103,17 @@
                 {{ account.provider }}
               </v-card-title>
               <v-spacer></v-spacer>
-              <v-btn v-if="account.autoPay" icon small flat outlined class="transparent-btn close-btn">
+              <!-- prettier-ignore -->
+              <v-btn 
+                v-if="account.autoPay" 
+                icon small flat outlined 
+                class="transparent-btn close-btn">
                 <v-icon>mdi-cash-sync</v-icon>
               </v-btn>
-              <v-btn icon small flat outlined class="transparent-btn close-btn">
+              <!-- prettier-ignore -->
+              <v-btn 
+                icon small flat outlined 
+                class="transparent-btn close-btn">
                 <v-icon
                   :color="account.favorite ? 'blue' : undefined"
                   @click.stop="accountStore.toggleFavorite(account.id, account.favorite, account.enc)"

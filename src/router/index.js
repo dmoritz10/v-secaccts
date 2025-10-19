@@ -21,7 +21,8 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
-
+  console.log("beforeEach", from, to);
+  // next();
   // Wait for Firebase auth to initialize
   await new Promise((resolve) => {
     const unsubscribe = auth.onAuthStateChanged((user) => {

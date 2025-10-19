@@ -2,8 +2,10 @@
 
 ## App Enhancements
 
-    - subscript to 2 week demo of 1password
-        * doc types
+- subscript to 2 week demo of 1password
+  - doc types
+- log changes to accounts and categories
+  - Google Cloud Audit Logs (system-level) is probably the way to go.
 
 ---
 
