@@ -15,13 +15,14 @@ export default defineConfig({
       },
       includeAssets: ["/secure144x144.png", "/secure512x512.png"],
       manifest: {
-        name: "secaccts",
+        id: "/v-secaccts",
+        name: "v-secaccts",
         short_name: "Secure Accounts",
         description: "",
-        theme_color: "#f9f9f9",
-        background_color: "#f9f9f9",
+        theme_color: "#ffffff",
+        background_color: "#ffffff",
         orientation: "portrait-primary",
-        start_url: "https://v-secaccts.web.app/",
+        start_url: "/",
         display: "standalone",
         icons: [
           {

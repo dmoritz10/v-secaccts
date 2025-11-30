@@ -4,7 +4,14 @@ import { auth, provider } from "@/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { useAccountStore } from "@/stores/account";
 import { useCategoryStore } from "@/stores/category";
-import { toast, alertDialog, promptDialog, confirmDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
+import {
+  toast,
+  alertDialog,
+  promptDialog,
+  confirmDialog,
+  blockScreen,
+  unblockScreen,
+} from "@/ui/dialogState.js";
 
 const SHEET_ID = "1vd8AFeyJfLHCFptRYwAAFp6dtUPQa86KX8b4JFcdWNk";
 const SHEETS_TO_RESTORE = []; // Empty = all sheets
@@ -58,7 +65,7 @@ export async function restoreAllSheets() {
 }
 
 async function getBackupSS(accessToken) {
-  const SHEET_ID = await promptDialog("Restore Database from Backup", "Enter Spreadsheet Id:", "SS Id");
+  const SHEET_ID = await promptDialog("Restore Database from Backup", "", "SS Id");
   if (SHEET_ID !== null) {
     console.log("User entered:", SHEET_ID);
   } else {

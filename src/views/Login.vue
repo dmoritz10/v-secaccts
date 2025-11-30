@@ -30,7 +30,9 @@
       </v-row>
     </v-sheet>
     <v-row class="my-10" justify="center">
-      <v-btn id="customGoogleBtn" color="primary" rounded large @click="signIn" class="google-btn"> Sign in </v-btn>
+      <v-btn id="customGoogleBtn" color="primary" rounded large @click="signIn" class="google-btn">
+        Sign in
+      </v-btn>
     </v-row>
     <!-- Modal (v-dialog) -->
     <v-dialog class="mt-16" v-model="dialogLogin" max-width="600">
@@ -152,7 +154,7 @@ async function submit() {
 
   const vault = await getOption("vault");
   if (!vault) {
-    alertDialog("Database open error");
+    alertDialog("Invalid Login");
     authStore.clearUser();
     clearKey();
     await signOut(auth);

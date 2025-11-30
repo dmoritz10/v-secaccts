@@ -40,9 +40,6 @@
                       <v-list-item @click="handleSignOut">
                         <v-list-item-title>Sign out</v-list-item-title>
                       </v-list-item>
-                      <v-list-item @click="debugAuth">
-                        <v-list-item-title>Debug userAuth</v-list-item-title>
-                      </v-list-item>
                     </v-list>
                   </v-menu>
                 </v-col>
