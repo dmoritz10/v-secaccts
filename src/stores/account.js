@@ -184,14 +184,18 @@ export const useAccountStore = defineStore("account", () => {
   };
 
   const saveAccount = async (formData) => {
-    try {
+
+try {
       const cat = categoryStore.state.items.find((cat) => cat.id === formData.categoryId);
 
       formData.lastChange = new Date().toDateString();
       if (!formData.enc && cat.enc) {
+        console.log('true', formData.enc, cat.enc, !formData.enc && cat.enc)
         var encAccts = (await encryptAccts([formData]))[0];
         encAccts.enc = true;
       } else {
+        console.log('false', formData.enc, cat.enc, !formData.enc && cat.enc)
+
         var encAccts = formData;
         encAccts.enc = false;
       }
@@ -252,7 +256,7 @@ export const useAccountStore = defineStore("account", () => {
           accountNbr: account.enc ? await decryptMessage(account.accountNbr) : account.accountNbr,
           autoPay: account.enc ? await decryptMessage(account.autoPay) : account.autoPay,
           categoryId: account.categoryId,
-          enc: account.enc,
+          enc: false,
           login: account.enc ? await decryptMessage(account.login) : account.login,
           loginUrl: account.enc ? await decryptMessage(account.loginUrl) : account.loginUrl,
           notes: account.enc ? await decryptMessage(account.notes) : account.notes,

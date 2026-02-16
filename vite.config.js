@@ -16,8 +16,8 @@ export default defineConfig({
       includeAssets: ["/secure144x144.png", "/secure512x512.png"],
       manifest: {
         id: "/v-secaccts",
-        name: "v-secaccts",
-        short_name: "Secure Accounts",
+        name: "Accounts Companion",
+        short_name: "Accounts Companion",
         description: "",
         theme_color: "#ffffff",
         background_color: "#ffffff",
