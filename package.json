@@ -1,13 +1,15 @@
 {
   "name": "v-secaccts",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
     "devf": "vite --force",
-    "preview": "vite preview"
+    "version": "node src/scripts/version-gen.js",
+    "build": "npx rimraf dist && vite build",
+    "deploy": "npm run version && npm run build && firebase deploy",
+    "clean": "rm -rf node_modules/.vite && vite"
   },
   "dependencies": {
     "@vueuse/core": "^13.6.0",

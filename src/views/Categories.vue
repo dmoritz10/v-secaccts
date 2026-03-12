@@ -39,7 +39,10 @@
                       <v-divider></v-divider>
                       <v-list-item @click="handleSignOut">
                         <v-list-item-title>Sign out</v-list-item-title>
-                      </v-list-item>
+                      </v-list-item >
+                       <v-list-item  v-if="authStore.currUser.admin" @click="verifyRestore('accounts', 'copy accounts')">
+                      <v-list-item-title>Verify Restore</v-list-item-title>
+                    </v-list-item>
                     </v-list>
                   </v-menu>
                 </v-col>
@@ -162,6 +165,9 @@ import { clearKey } from "@/services/keyVault";
 import { marked } from "marked";
 import { getStorage } from "firebase/storage";
 import { getApp } from "firebase/app";
+import {  verifyRestore } from "@/services/restoreDB";
+import { VERSION, BUILD_DATE } from '@/services/version-info.js';
+
 
 const router = useRouter();
 const route = useRoute();
@@ -283,7 +289,8 @@ const about = async () => {
   if (!res.ok) throw new Error(`HTTP ${res.status} while fetching about.md`);
   const markdown = await res.text();
   // Convert Markdown → HTML
-  const html = marked.parse(markdown);
+  let  html = marked.parse(markdown);
+  html = html.replace("VERSION", VERSION).replace("DATE",BUILD_DATE)
   alertDialog("About Secure Accounts", html);
 };
 

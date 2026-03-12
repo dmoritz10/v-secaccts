@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- HELPER FUNCTIONS ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Layer 1: Hardcoded Email Whitelist
+    function isWhitelistedEmail() {
+      return isSignedIn() && 
+             request.auth.token.email in [
+               "dmoritz10@gmail.com", 
+               "christinamoritz@gmail.com"
+             ];
+    }
+
+    // Layer 2: Existence in the 'users' collection
+    function isRegisteredUser() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    // Combined Check: Must be in the email list AND have a Firestore document
+    function isFullyAuthorized() {
+      return isWhitelistedEmail() && isRegisteredUser();
+    }
+
+    function isAdmin() {
+      return isFullyAuthorized() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
+    }
+
+    // --- COLLECTION RULES ---
+
+    // 1. Users Collection Logic
+    match /users/{userId} {
+      // Users can read their own profile if they pass the email whitelist
+      allow read: if isWhitelistedEmail() && request.auth.uid == userId;
+      // Only you (Admin) can create/update/delete user records manually
+      allow write: if isAdmin();
+    }
+
+    // 2. All Other Collections (Trips, Segments, Activities, etc.)
+    match /{allOtherData=**} {
+      // Exclude users collection from this catch-all to prevent rule overlap
+      match /users/{any} {
+        allow read, write: if false; 
+      }
+
+      // Requirement: Email Whitelist + User Document
+      allow read, create, update, delete: if isFullyAuthorized();
+
+      // Requirement: Admin status
+      // allow delete: if isAdmin();
+    }
+  }
+}

@@ -8,7 +8,7 @@ import "@mdi/font/css/materialdesignicons.css";
 import { useAccountStore } from "@/stores/account";
 import { useCategoryStore } from "@/stores/category";
 import { vuetify } from "./plugins/vuetify";
-
+import './assets/index.css'
 const app = createApp(App);
 const pinia = createPinia();
 app.use(pinia);

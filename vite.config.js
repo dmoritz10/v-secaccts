@@ -11,7 +11,7 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate", // Automatically update service worker
       devOptions: {
-        enabled: true, // Enable PWA in development
+        enabled: false, // Enable PWA in development
       },
       includeAssets: ["/secure144x144.png", "/secure512x512.png"],
       manifest: {

@@ -1,11 +1,13 @@
 ProjectId: v-secaccts
 
-Version: 2.0.4
+Version: VERSION
 
-Date: 10/18/2025
+Date: DATE
 
 <br>
 
-- updates to auth.js
-- Token refresh
-- Remove User Name from Sign In Verification
+- backup / restore
+- firebase rules
+- vuetify theme
+- version generation on build
+- await on alertDialog
