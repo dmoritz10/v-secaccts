@@ -9,7 +9,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Layer 1: Hardcoded Email Whitelist
+    // Layer 1: The Hardcoded Email Whitelist
     function isWhitelistedEmail() {
       return isSignedIn() && 
              request.auth.token.email in [
@@ -18,44 +18,55 @@ service cloud.firestore {
              ];
     }
 
-    // Layer 2: Existence in the 'users' collection
+    // Layer 2: The Firestore Document check (UID must be the Doc ID)
     function isRegisteredUser() {
       return isSignedIn() && 
              exists(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
-    // Combined Check: Must be in the email list AND have a Firestore document
     function isFullyAuthorized() {
       return isWhitelistedEmail() && isRegisteredUser();
     }
 
+    // Check if the current user has the 'admin' flag set to true in their doc
     function isAdmin() {
       return isFullyAuthorized() && 
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.admin == true;
     }
 
-    // --- COLLECTION RULES ---
-
-    // 1. Users Collection Logic
-    match /users/{userId} {
-      // Users can read their own profile if they pass the email whitelist
-      allow read: if isWhitelistedEmail() && request.auth.uid == userId;
-      // Only you (Admin) can create/update/delete user records manually
-      allow write: if isAdmin();
+    // Check specifically for Christina's email
+    function isPartner() {
+      return isFullyAuthorized() && 
+             request.auth.token.email == "christinamoritz@gmail.com";
     }
 
-    // 2. All Other Collections (Trips, Segments, Activities, etc.)
-    match /{allOtherData=**} {
-      // Exclude users collection from this catch-all to prevent rule overlap
-      match /users/{any} {
-        allow read, write: if false; 
-      }
+    // --- COLLECTION RULES ---
 
-      // Requirement: Email Whitelist + User Document
-      allow read, create, update, delete: if isFullyAuthorized();
+    // 1. Users Collection
+    // Read-only for the app. All management happens in the Firebase Console.
+    match /users/{userId} {
+      allow read: if isWhitelistedEmail() && request.auth.uid == userId;
+      allow write: if false; 
+    }
 
-      // Requirement: Admin status
-      // allow delete: if isAdmin();
+    // 2. Sensitive collections
+    // All can read/edit, but only Admin can delete.
+    match /categories/{category} {
+      allow read, create, update: if isFullyAuthorized();
+      allow delete: if isAdmin();
+    }
+
+    // 3. read/edit AND delete
+    match /accounts/{account} {
+      allow read, create, update: if isFullyAuthorized();
+      allow delete: if isAdmin() || isPartner();
+    }
+    
+    // 4. Global Fallback
+    // For any other collections default to Admin-only deletion for safety.
+    match /{collection}/{document} {
+      allow read, create, update: if isFullyAuthorized();
+      allow delete: if isAdmin();
     }
   }
 }
