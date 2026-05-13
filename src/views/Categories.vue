@@ -136,8 +136,9 @@
     </template>
     <!-- Category Dialog -->
     <CategoryDialog
+      v-if="categoryStore.dialog"
       v-model="categoryStore.dialog"
-      :form-data="categoryStore.state.formData"
+      :category="categoryStore.state.selectedCategory"
       @save="categoryStore.saveCategory"
       @cancel="categoryStore.closeCategoryDialog"
     />

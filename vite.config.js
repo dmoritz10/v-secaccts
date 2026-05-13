@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
-    VitePWA({
+    VitePWA({   
       registerType: "autoUpdate", // Automatically update service worker
       devOptions: {
         enabled: false, // Enable PWA in development

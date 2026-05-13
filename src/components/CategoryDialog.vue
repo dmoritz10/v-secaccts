@@ -1,55 +1,41 @@
 <template>
-  <!-- <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue')" max-width="500px" persistent> -->
   <v-dialog v-model="modelValue" max-width="500px" persistent>
     <v-card>
-      <v-card-title>
-        {{ formData.categoryId ? "Edit Category" : "Add Category" }}
-      </v-card-title>
+      <v-card-title>{{ localData.id ? "Edit Category" : "Add Category" }}</v-card-title>
       <v-card-text>
         <v-form ref="editForm">
-          <v-text-field
-            v-model="formData.name"
-            label="Category Name"
-            required
-            variant="outlined"
-            :rules="[(v) => !!v || 'Category name is required']"
-          ></v-text-field>
+          <v-text-field v-model.trim="localData.name" persistent-placeholder label="* Category Name" variant="outlined" :rules="[(v) => !!v || 'Required']"/>
         </v-form>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="primary" @click="$emit('cancel', formData)">Cancel</v-btn>
-        <v-btn color="primary" @click="saveEdit(formData)">Save</v-btn>
+        <v-btn @click="$emit('cancel')">Cancel</v-btn>
+        <v-btn color="primary" @click="saveEdit">Save</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, toRaw } from "vue";
+
+const modelValue = defineModel(); // Dialog visibility
+const props = defineProps({
+  category: { type: Object, required: true }, // The blueprint or record
+});
+const emit = defineEmits(["save", "cancel"]);
 
 const editForm = ref(null);
 
-async function saveEdit($event) {
-  const { valid } = await editForm.value?.validate();
+// 4. Create the sandbox using structuredClone
+// This is modern, fast, and breaks all reactive links to the store.
+const localData = ref(JSON.parse(JSON.stringify(props.category)));
 
+async function saveEdit() {
+  const { valid } = await editForm.value?.validate();
   if (valid) {
-    emit("save", props.formData);
+    // 5. Send a clean, deep-cloned copy back to the store
+    emit("save", JSON.parse(JSON.stringify(localData.value)));
   }
 }
-
-const modelValue = defineModel();
-const props = defineProps({
-  // modelValue: {
-  //   type: Boolean,
-  //   required: true,
-  // },
-  formData: {
-    type: Object,
-    required: true,
-  },
-});
-
-// const emit = defineEmits(["update:modelValue", "save", "cancel"]);
-const emit = defineEmits(["save", "cancel"]);
 </script>

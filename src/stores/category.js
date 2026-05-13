@@ -5,21 +5,20 @@ import { collection, query, onSnapshot, addDoc, updateDoc, doc, getDocs, where, 
 import { useAccountStore } from "./account";
 import { toast, alertDialog, confirmDialog } from "@/ui/dialogState.js";
 
+const BLANK_CATEGORY = { name: "", enc: false };
+
 export const useCategoryStore = defineStore("category", () => {
   const accountStore = useAccountStore();
 
   const state = reactive({
     items: [],
     isLoaded: false,
-    formData: {
-      categoryId: null,
-      name: "",
-      enc: false,
-    },
+    selectedCategory: null, // The object currently being edited
     searchQuery: "",
   });
 
   const dialog = ref(false);
+
   const unsubscribeCategories = ref(null);
   let isInitialLoad = true;
   const isLoaded = computed(() => state.isLoaded);
@@ -127,30 +126,31 @@ export const useCategoryStore = defineStore("category", () => {
     return category ? category.name : "N/A";
   };
 
-  const saveCategory = async () => {
-    try {
-      const { categoryId, name, enc } = state.formData;
-      if (!name) throw new Error("Category name is required");
-
-      let docRef;
-      if (categoryId) {
-        docRef = doc(db, "categories", categoryId);
-        await updateDoc(docRef, { name, enc });
-      } else {
-        docRef = await addDoc(collection(db, "categories"), { name, enc });
-      }
-      await nextTick();
-      closeCategoryDialog();
-      state.formData = { categoryId: null, name: "", enc: false };
-      return docRef.id;
-    } catch (error) {
-      console.error("Error saving category:", error);
-      alertDialog("Error saving category", error);
-      throw error;
-    }
+ 
+  const openCategoryDialog = (category = null) => {
+    state.selectedCategory = category ? category : { ...BLANK_CATEGORY };
+    dialog.value = true;
   };
 
-  const deleteCategory = async (categoryId) => {
+  const closeCategoryDialog = () => {
+    dialog.value = false;
+    state.selectedCategory = null;
+  };
+
+  // 3. Receive the cleaned data from the dialog
+  const saveCategory = async (categoryData) => {
+    const { id, name, enc } = categoryData;
+    if (!name) return;
+
+    if (id) {
+      await updateDoc(doc(db, "categories", id), { name, enc });
+    } else {
+      await addDoc(collection(db, "categories"), { name, enc });
+    }
+    closeCategoryDialog();
+  };
+
+   const deleteCategory = async (categoryId) => {
     var catName = categoryNameFor(categoryId);
     const accountsRef = collection(db, "accounts");
     const q = query(accountsRef, where("categoryId", "==", categoryId));
@@ -187,17 +187,6 @@ export const useCategoryStore = defineStore("category", () => {
     }
   };
 
-  const openCategoryDialog = (category = null) => {
-    dialog.value = true;
-    state.formData = category
-      ? { categoryId: category.id, name: category.name, enc: category.enc }
-      : { categoryId: null, name: "", enc: false };
-  };
-
-  const closeCategoryDialog = () => {
-    dialog.value = false;
-    state.formData = { categoryId: null, name: "", enc: false };
-  };
 
   return {
     state,
