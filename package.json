@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "devf": "vite --force",
+    "dev": "vite --open",
+    "devf": "vite -- open --force",
     "version": "node src/scripts/version-gen.js",
     "build": "npx rimraf dist && vite build",
     "deploy": "npm run version && npm run build && firebase deploy",
