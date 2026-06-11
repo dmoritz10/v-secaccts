@@ -23,7 +23,7 @@ const buildDate = new Date().toLocaleString('en-US', {
   month: 'short',
   day: 'numeric',
   year: 'numeric',
-  hour: '2-digit',
+  hour: 'numeric',
   minute: '2-digit',
   // Explicitly omitting 'second' removes the :ss
 });

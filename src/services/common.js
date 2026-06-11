@@ -198,7 +198,7 @@ async function decryptCat(cat) {
 
 async function encryptAccts(accts) {
   // used
-  console.log("encryptAccts");
+  console.time("encryptAccts");
 
   try {
     // Initialize result array with same structure
