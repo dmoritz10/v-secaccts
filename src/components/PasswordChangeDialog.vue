@@ -12,8 +12,7 @@
           type="password"
           variant="outlined"
           :error="confirmError"
-          :error-messages="confirmErrorMsg"
-        />
+          :error-messages="confirmErrorMsg" />
       </v-card-text>
 
       <v-card-actions>
@@ -26,19 +25,19 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { getOption, updateAccts } from "@/services/common";
+import { ref, computed } from 'vue';
+import { getOption, updateAccts } from '@/services/common';
 
-import { collection, doc, query, getDocs, where, updateDoc, writeBatch, orderBy } from "firebase/firestore";
-import { toast, alertDialog, blockScreen, unblockScreen } from "@/ui/dialogState.js";
-import { db } from "@/firebase";
+import { collection, doc, query, getDocs, where, updateDoc, writeBatch, orderBy } from 'firebase/firestore';
+import { toast, alertDialog, blockScreen, unblockScreen } from '@/ui/dialogState.js';
+import { db } from '@/firebase';
 
-import { encryptAccts, decryptAccts, acctDBFlds } from "@/services/common";
-import { verifyPassword, initializeVerifier, deriveKey } from "@/services/enc";
-import { setKey, clearKey } from "@/services/keyVault";
-import { useAccountStore } from "@/stores/account";
+import { encryptAccts, decryptAccts, acctDBFlds } from '@/services/common';
+import { verifyPassword, initializeVerifier, deriveKey } from '@/services/enc';
+import { setKey, clearKey } from '@/services/keyVault';
+import { useAccountStore } from '@/stores/account';
 
-const strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})");
+const strongRegex = new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})');
 const invalidPwdMsg = `Passwords must contain at least
     1 lowercase alphabetical character and
     1 uppercase alphabetical character and
@@ -50,31 +49,31 @@ const invalidPwdMsg = `Passwords must contain at least
 const accountStore = useAccountStore();
 
 const show = ref(false);
-const currentPwd = ref("");
-const newPwd = ref("");
-const confirmPwd = ref("");
+const currentPwd = ref('');
+const newPwd = ref('');
+const confirmPwd = ref('');
 const confirmErrorMsg = computed(() => {
   if (!confirmPwd.value) {
-    return "Please confirm your password";
+    return 'Please confirm your password';
   }
   if (newPwd.value !== confirmPwd.value) {
-    return "Passwords do not match";
+    return 'Passwords do not match';
   }
   if (!strongRegex.test(newPwd.value)) {
     return invalidPwdMsg;
   }
-  return "";
+  return '';
 });
 
-const confirmError = computed(() => confirmErrorMsg.value !== "");
+const confirmError = computed(() => confirmErrorMsg.value !== '');
 
 const canSubmit = computed(() => currentPwd.value && newPwd.value && confirmPwd.value && !confirmError.value);
 
 // Open method for parent
 function open() {
-  currentPwd.value = "";
-  newPwd.value = "";
-  confirmPwd.value = "";
+  currentPwd.value = '';
+  newPwd.value = '';
+  confirmPwd.value = '';
   show.value = true;
 }
 
@@ -88,9 +87,9 @@ function cancel() {
 async function submit() {
   if (!canSubmit.value) return;
 
-  const vault = await getOption("vault");
+  const vault = await getOption('vault');
   if (!vault) {
-    alertDialog("Database open error");
+    alertDialog('Database open error');
     clearKey();
     await signOut(auth);
     return;
@@ -104,18 +103,18 @@ async function submit() {
 
   if (!currKey) {
     newPwd.value = null;
-    alertDialog("Change Password", "Invalid password");
+    alertDialog('Change Password', 'Invalid password');
     return null;
   }
 
   blockScreen();
 
-  const getAccts = await getDocs(collection(db, "accounts"));
+  const getAccts = await getDocs(collection(db, 'accounts'));
   let accts = getAccts.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   const encAccts = accts.filter((acct) => acct.enc);
 
-  const decAccts = await decryptAccts(encAccts);
+  const decAccts = await decryptAccts(encAccts, false);
 
   const newVault = await initializeVerifier(newPwd.value);
 
@@ -129,13 +128,11 @@ async function submit() {
 
   const reEncAccts = await encryptAccts(decAccts);
 
-  accountStore.unsubscribeFromAccounts();
-  const bUpd = await updateAccts(reEncAccts, true);
-  accountStore.subscribeToAccounts();
+  const bUpd = await updateAccts(reEncAccts);
 
   unblockScreen();
 
-  toast("Change of password is complete", 3000);
+  toast('Change of password is complete', 3000);
 }
 
 defineExpose({ open });

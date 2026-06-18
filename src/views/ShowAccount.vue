@@ -16,7 +16,7 @@
                 </h2>
               </v-col>
               <!-- Sandwich / 3-dot menu -->
-              <v-col cols="1" class="d-flex justify-end"> </v-col>
+              <v-col cols="1" class="d-flex justify-end"></v-col>
             </v-row>
           </v-sheet>
         </v-col>
@@ -36,8 +36,7 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(categoryNameFor(currentAccount?.categoryId) || 'N/A', 'Category')"
-                  ></v-icon>
+                    @click="copyToClipboard(categoryNameFor(currentAccount?.categoryId) || 'N/A', 'Category')"></v-icon>
                 </td>
               </tr>
               <tr>
@@ -49,8 +48,7 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.login || 'N/A', 'Login')"
-                  ></v-icon>
+                    @click="copyToClipboard(currentAccount?.login || 'N/A', 'Login')"></v-icon>
                 </td>
               </tr>
               <tr>
@@ -64,8 +62,9 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(showPassword ? currentAccount?.password || 'N/A' : '****', 'Password')"
-                  ></v-icon>
+                    @click="
+                      copyToClipboard(showPassword ? currentAccount?.password || 'N/A' : '****', 'Password')
+                    "></v-icon>
                 </td>
               </tr>
               <tr v-if="currentAccount?.accountNbr">
@@ -77,44 +76,43 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.accountNbr, 'Account Number')"
-                  ></v-icon>
+                    @click="copyToClipboard(currentAccount?.accountNbr, 'Account Number')"></v-icon>
                 </td>
               </tr>
               <tr>
                 <td class="text-green-darken-3 font-weight-bold">Encrypted</td>
                 <td>
-                  <h3>{{ currentAccount?.enc ? "Yes" : "No" }}</h3>
+                  <h3>{{ currentAccount?.enc ? 'Yes' : 'No' }}</h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.enc ? 'Yes' : 'No', 'Encrypted')"
-                  ></v-icon>
+                    @click="copyToClipboard(currentAccount?.enc ? 'Yes' : 'No', 'Encrypted')"></v-icon>
                 </td>
               </tr>
               <tr v-if="currentAccount?.favorite">
                 <td class="text-green-darken-3 font-weight-bold">Favorite</td>
                 <td>
-                  <h3>{{ currentAccount?.favorite ? "Yes" : "No" }}</h3>
+                  <h3>{{ currentAccount?.favorite ? 'Yes' : 'No' }}</h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.favorite ? 'Yes' : 'No', 'Favorite')"
-                  ></v-icon>
+                    @click="copyToClipboard(currentAccount?.favorite ? 'Yes' : 'No', 'Favorite')"></v-icon>
                 </td>
               </tr>
               <tr v-if="currentAccount?.loginUrl">
                 <td class="text-green-darken-3 font-weight-bold">Login URL</td>
                 <td>
-                  <a :href="currentAccount?.loginUrl" target="_blank" rel="noopener noreferrer">{{
-                    currentAccount?.loginUrl && currentAccount?.loginUrl.length > 30
-                      ? currentAccount?.loginUrl.slice(0, 30) + "..."
-                      : currentAccount?.loginUrl
-                  }}</a>
+                  <a :href="currentAccount?.loginUrl" target="_blank" rel="noopener noreferrer">
+                    {{
+                      currentAccount?.loginUrl && currentAccount?.loginUrl.length > 30
+                        ? currentAccount?.loginUrl.slice(0, 30) + '...'
+                        : currentAccount?.loginUrl
+                    }}
+                  </a>
                 </td>
                 <td class="icon-cell">
                   <v-icon
@@ -127,8 +125,7 @@
                           : currentAccount?.loginUrl || 'N/A',
                         'Login URL'
                       )
-                    "
-                  ></v-icon>
+                    "></v-icon>
                 </td>
               </tr>
               <tr v-if="currentAccount?.autoPay">
@@ -140,8 +137,7 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.autoPay, 'Auto Pay')"
-                  ></v-icon>
+                    @click="copyToClipboard(currentAccount?.autoPay, 'Auto Pay')"></v-icon>
                 </td>
               </tr>
               <tr v-if="currentAccount?.pinNbr">
@@ -153,8 +149,7 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.pinNbr, 'PIN Number')"
-                  ></v-icon>
+                    @click="copyToClipboard(currentAccount?.pinNbr, 'PIN Number')"></v-icon>
                 </td>
               </tr>
               <tr v-if="currentAccount?.securityQA">
@@ -166,8 +161,7 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.securityQA, 'Security Q&A')"
-                  ></v-icon>
+                    @click="copyToClipboard(currentAccount?.securityQA, 'Security Q&A')"></v-icon>
                 </td>
               </tr>
               <tr v-if="currentAccount?.notes">
@@ -179,8 +173,7 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.notes, 'Notes')"
-                  ></v-icon>
+                    @click="copyToClipboard(currentAccount?.notes, 'Notes')"></v-icon>
                 </td>
               </tr>
               <tr v-if="currentAccount?.lastChange">
@@ -192,8 +185,7 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.lastChange, 'Last Change')"
-                  ></v-icon>
+                    @click="copyToClipboard(currentAccount?.lastChange, 'Last Change')"></v-icon>
                 </td>
               </tr>
             </tbody>
@@ -205,8 +197,8 @@
           <v-btn :disabled="!previousAccount" color="white" @click="navigateToAccount(previousAccount?.id)">Prev</v-btn>
           <v-btn color="white" @click="openUpdateDialog(currentAccount)">
             <!-- <v-btn color="primary" @click="openAccountDialog(currentAccount)" -->
-            Update</v-btn
-          >
+            Update
+          </v-btn>
           <v-btn :disabled="!nextAccount" color="white" @click="navigateToAccount(nextAccount?.id)">Next</v-btn>
         </v-btn-group>
       </v-footer>
@@ -217,22 +209,21 @@
         v-model="accountStore.dialog"
         :form-data="accountStore.state.formData"
         @save="($event) => handleSave($event)"
-        @cancel="accountStore.closeAccountDialog"
-      />
+        @cancel="accountStore.closeAccountDialog" />
     </template>
   </v-container>
 </template>
 
 <script setup>
-import { computed, onMounted, watch, nextTick, ref, toRef } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useAccountStore } from "@/stores/account";
-import { useCategoryStore } from "@/stores/category";
-import AccountDialog from "@/components/AccountDialog.vue";
+import { computed, onMounted, watch, nextTick, ref, toRef } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useAccountStore } from '@/stores/account';
+import { useCategoryStore } from '@/stores/category';
+import AccountDialog from '@/components/AccountDialog.vue';
 
-import { decryptAcctReactive } from "@/services/common";
-import { until } from "@vueuse/core";
-import { toast, alertDialog } from "@/ui/dialogState.js";
+import { decryptAcctReactive } from '@/services/common';
+import { until } from '@vueuse/core';
+import { toast, alertDialog } from '@/ui/dialogState.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -253,17 +244,16 @@ const currentAccount = computed(() => {
   return rtn;
 });
 
-watch(currentAccount, async () => {
-  console.log("watch", currentAccount.value.enc, { ...currentAccount.value });
-  currentAccountIsLoaded.value = false;
-  // console.trace("Change stack trace:");
-  if (currentAccount.value.enc) {
+watch(
+  currentAccount,
+  async () => {
+    console.log('watch', currentAccount.value.enc, { ...currentAccount.value });
+    currentAccountIsLoaded.value = false;
     await decryptAcctReactive(currentAccount.value);
-    // Mark as decrypted
-    currentAccount.value.enc = false;
-  }
-  currentAccountIsLoaded.value = true;
-});
+    currentAccountIsLoaded.value = true;
+  },
+  { immediate: true }
+);
 
 const filteredAccounts = computed(() => accountStore.filteredAccounts);
 
@@ -285,34 +275,29 @@ const nextAccount = computed(() => {
 const copyToClipboard = async (text, fieldName) => {
   try {
     await navigator.clipboard.writeText(text);
-    toast("Copied to clipboard", 3000);
+    toast('Copied to clipboard', 3000);
   } catch (error) {
-    console.error("ShowAccount.vue: Failed to copy to clipboard:", error);
-    alertDialog("ShowAccount.vue: Failed to copy to clipboard", error);
+    console.error('ShowAccount.vue: Failed to copy to clipboard:', error);
+    alertDialog('ShowAccount.vue: Failed to copy to clipboard', error);
   }
 };
 
 onMounted(async () => {
-  console.log("ShowAccount onMounted");
+  console.log('ShowAccount onMounted', { ...currentAccount.value });
 
   // Wait until currentAccount is defined
   await until(() => accountStore.state.items.length > 0);
 
-  // If encrypted, decrypt in place
-  if (currentAccount.value.enc) {
-    await decryptAcctReactive(currentAccount.value);
-    // Mark as decrypted
-    currentAccount.value.enc = false;
-  }
+  await decryptAcctReactive(currentAccount.value);
 
   // Now data is ready for template
   currentAccountIsLoaded.value = true;
-  console.log("onMount complete");
+  console.log('onMount complete');
 });
 
 const returnToAccounts = () => {
   router.push({
-    path: "/accounts",
+    path: '/accounts',
     query: {
       id: currentAccount.value.categoryId,
       name: categoryStore.categoryNameFor(currentAccount.value.categoryId),
@@ -337,7 +322,7 @@ const handleSave = async (formData) => {
     await nextTick();
     accountStore.closeAccountDialog();
     router.push({
-      path: "/accounts",
+      path: '/accounts',
       query: {
         id: formData.categoryId,
         name: categoryStore.categoryNameFor(formData.categoryId),
@@ -346,8 +331,8 @@ const handleSave = async (formData) => {
       },
     });
   } catch (error) {
-    console.error("ShowAccount.vue save account failed:", error);
-    alertDialog("ShowAccount.vue save account failed", error);
+    console.error('ShowAccount.vue save account failed:', error);
+    alertDialog('ShowAccount.vue save account failed', error);
   }
 };
 </script>

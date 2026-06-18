@@ -4,8 +4,7 @@
       v-if="!categoryStore.isLoaded"
       indeterminate
       color="primary"
-      class="ma-16 d-flex justify-center"
-    ></v-progress-circular>
+      class="ma-16 d-flex justify-center"></v-progress-circular>
     <template v-else-if="Array.isArray(categoryStore.filteredCategories)">
       <v-container fluid class="ma-0 pa-0" style="height: 100%; overflow: visible">
         <!-- sheet -->
@@ -39,10 +38,15 @@
                       <v-divider></v-divider>
                       <v-list-item @click="handleSignOut">
                         <v-list-item-title>Sign out</v-list-item-title>
-                      </v-list-item >
-                       <v-list-item  v-if="authStore.currUser.admin" @click="verifyRestore('accounts', 'copy accounts')">
-                      <v-list-item-title>Verify Restore</v-list-item-title>
-                    </v-list-item>
+                      </v-list-item>
+                      <v-list-item v-if="authStore.currUser.admin" @click="verifyRestore('accounts', 'copy accounts')">
+                        <v-list-item-title>Verify Restore</v-list-item-title>
+                      </v-list-item>
+                      <v-list-item
+                        v-if="authStore.currUser.admin"
+                        @click="migrateAndEncryptAccts('gifx8ESDzyLoLA9SI5QP')">
+                        <v-list-item-title>Migrate all Accounts to new structure</v-list-item-title>
+                      </v-list-item>
                     </v-list>
                   </v-menu>
                 </v-col>
@@ -72,8 +76,7 @@
               hide-details
               height="20"
               elevation="0"
-              style="background-color: white"
-            />
+              style="background-color: white" />
           </v-col>
         </v-row>
 
@@ -85,8 +88,7 @@
               class="d-flex align-center pa-2 mx-3"
               color="amber-lighten-4"
               :id="`category-${category.id}`"
-              @click="goToCategoryAccounts(category.id)"
-            >
+              @click="goToCategoryAccounts(category.id)">
               <v-card-title class="text-h6 wrap-card-title">
                 {{ category.name }}
               </v-card-title>
@@ -95,17 +97,16 @@
                 flat
                 outlined
                 :class="['crypt-btn', 'close-btn', category.enc ? 'bg-red-lighten-2' : 'bg-green-lighten-2']"
-                @click.stop="cryptCat(category)"
-              >
-                {{ category.enc ? "decrypt" : "encrypt" }} </v-btn
-              ><v-btn
+                @click.stop="cryptCat(category)">
+                {{ category.enc ? 'decrypt' : 'encrypt' }}
+              </v-btn>
+              <v-btn
                 icon
                 small
                 flat
                 outlined
                 class="transparent-btn close-btn py-1"
-                @click.stop="categoryStore.openCategoryDialog(category)"
-              >
+                @click.stop="categoryStore.openCategoryDialog(category)">
                 <v-icon>mdi-pencil-outline</v-icon>
               </v-btn>
               <v-btn
@@ -114,8 +115,7 @@
                 small
                 outlined
                 class="transparent-btn close-btn"
-                @click.stop="categoryStore.deleteCategory(category.id)"
-              >
+                @click.stop="categoryStore.deleteCategory(category.id)">
                 <v-icon>mdi-delete-outline</v-icon>
               </v-btn>
             </v-card>
@@ -129,8 +129,7 @@
         fab
         class="add-btn align-center justify-center"
         style="position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%)"
-        @click="categoryStore.openCategoryDialog()"
-      >
+        @click="categoryStore.openCategoryDialog()">
         <v-icon>mdi-plus</v-icon>
       </v-btn>
     </template>
@@ -140,8 +139,7 @@
       v-model="categoryStore.dialog"
       :category="categoryStore.state.selectedCategory"
       @save="categoryStore.saveCategory"
-      @cancel="categoryStore.closeCategoryDialog"
-    />
+      @cancel="categoryStore.closeCategoryDialog" />
     <!-- Change password Dialog -->
     <template>
       <v-btn @click="openChangePasswordDialog">Change Password</v-btn>
@@ -151,24 +149,23 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted } from "vue";
-import { useRouter, useRoute } from "vue-router";
-import { useCategoryStore } from "@/stores/category";
-import { useAccountStore } from "@/stores/account";
-import { useAuthStore } from "@/stores/auth";
-import { auth } from "../firebase";
-import { signOut, getIdToken } from "firebase/auth";
-import CategoryDialog from "@/components/CategoryDialog.vue";
-import PasswordChangeDialog from "@/components/PasswordChangeDialog.vue";
-import { alertDialog } from "@/ui/dialogState.js";
-import { encryptCat, decryptCat } from "@/services/common";
-import { clearKey } from "@/services/keyVault";
-import { marked } from "marked";
-import { getStorage } from "firebase/storage";
-import { getApp } from "firebase/app";
-import {  verifyRestore } from "@/services/restoreDB";
+import { ref, watch, nextTick, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import { useCategoryStore } from '@/stores/category';
+import { useAccountStore } from '@/stores/account';
+import { useAuthStore } from '@/stores/auth';
+import { auth } from '../firebase';
+import { signOut, getIdToken } from 'firebase/auth';
+import CategoryDialog from '@/components/CategoryDialog.vue';
+import PasswordChangeDialog from '@/components/PasswordChangeDialog.vue';
+import { alertDialog } from '@/ui/dialogState.js';
+import { encryptCat, decryptCat } from '@/services/common';
+import { clearKey } from '@/services/keyVault';
+import { marked } from 'marked';
+import { getStorage } from 'firebase/storage';
+import { getApp } from 'firebase/app';
+import { verifyRestore, migrateAndEncryptAccts } from '@/services/restoreDB';
 import { VERSION, BUILD_DATE } from '@/services/version-info.js';
-
 
 const router = useRouter();
 const route = useRoute();
@@ -182,20 +179,20 @@ function openChangePasswordDialog() {
 }
 
 onMounted(async () => {
-  console.log("Categories.vue mounted, isLoaded:", categoryStore.isLoaded);
+  console.log('Categories.vue mounted, isLoaded:', categoryStore.isLoaded);
   try {
     await categoryStore.subscribeToCategories();
   } catch (error) {
-    console.error("Categories.vue subscribeToCategories failed:", error);
-    alertDialog("Categories.vue subscribeToCategories failed", error);
+    console.error('Categories.vue subscribeToCategories failed:', error);
+    alertDialog('Categories.vue subscribeToCategories failed', error);
   }
   try {
     await accountStore.subscribeToAccounts();
   } catch (error) {
-    console.error("accountStore subscribeToAccounts failed:", error);
-    alertDialog("accountStore subscribeToAccounts failed", error);
+    console.error('accountStore subscribeToAccounts failed:', error);
+    alertDialog('accountStore subscribeToAccounts failed', error);
   }
-  console.log("catefories.vue. onMounted complete");
+  console.log('catefories.vue. onMounted complete');
 });
 
 watch(
@@ -206,7 +203,7 @@ watch(
         scrollToCategory(newQuery.scrollTo);
       });
     } else {
-      console.log("Categories.vue watch triggered, no scrollTo, initial load or no scroll needed");
+      console.log('Categories.vue watch triggered, no scrollTo, initial load or no scroll needed');
     }
   },
   { immediate: true, deep: true }
@@ -232,35 +229,35 @@ const goToCategoryAccounts = (catId) => {
 // Navigate to All Accounts
 const goToAllAccounts = () => {
   // Clear categoryId in the store to show all accounts
-  accountStore.selectedCatId = "";
+  accountStore.selectedCatId = '';
   // Reset filters
   accountStore.setFilters([]);
   // Navigate to Accounts.vue
-  router.push("/accounts");
+  router.push('/accounts');
 };
 
 const scrollToCategory = (scrollTo) => {
-  if (scrollTo && typeof scrollTo === "string") {
+  if (scrollTo && typeof scrollTo === 'string') {
     nextTick(() => {
-      const container = document.querySelector(".v-container");
+      const container = document.querySelector('.v-container');
       if (container) container.scrollTop = 0;
-      document.querySelectorAll(".category-card").forEach((el) => {
-        el.classList.remove("sheets-focus");
+      document.querySelectorAll('.category-card').forEach((el) => {
+        el.classList.remove('sheets-focus');
       });
       const element = document.getElementById(`category-${scrollTo}`);
       if (element) {
         element.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "nearest",
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest',
         });
-        element.classList.add("sheets-focus");
+        element.classList.add('sheets-focus');
       } else {
         console.warn(`Categories.vue category element not found: category-${scrollTo}`);
       }
     });
   } else {
-    console.log("Categories.vue scrollToCategory, no scrollTo provided:", scrollTo);
+    console.log('Categories.vue scrollToCategory, no scrollTo provided:', scrollTo);
   }
 };
 
@@ -269,13 +266,13 @@ const handleSignOut = async () => {
     await signOut(auth);
     authStore.clearUser();
     clearKey();
-    router.replace("/");
-    console.log("Sign-out successful");
+    router.replace('/');
+    console.log('Sign-out successful');
   } catch (error) {
-    console.error("Sign-out error:", error);
+    console.error('Sign-out error:', error);
     authStore.clearUser();
     clearKey();
-    router.replace("/");
+    router.replace('/');
   }
 };
 
@@ -286,23 +283,23 @@ const cryptCat = async (cat) => {
 };
 
 const about = async () => {
-  const res = await fetch("/about.md");
+  const res = await fetch('/about.md');
   if (!res.ok) throw new Error(`HTTP ${res.status} while fetching about.md`);
   const markdown = await res.text();
   // Convert Markdown → HTML
-  let  html = marked.parse(markdown);
-  html = html.replace("VERSION", VERSION).replace("DATE",BUILD_DATE)
-  alertDialog("About Secure Accounts", html);
+  let html = marked.parse(markdown);
+  html = html.replace('VERSION', VERSION).replace('DATE', BUILD_DATE);
+  alertDialog('About Secure Accounts', html);
 };
 
 async function debugAuth() {
   auth.currentUser
     ?.getIdToken(true)
-    .then((token) => console.log("Token refreshed successfully"))
-    .catch((err) => console.error("Token refresh failed", err));
+    .then((token) => console.log('Token refreshed successfully'))
+    .catch((err) => console.error('Token refresh failed', err));
 
   const storage = getStorage(getApp());
-  console.log("Resolved bucket:", storage.bucket);
+  console.log('Resolved bucket:', storage.bucket);
 }
 </script>
 

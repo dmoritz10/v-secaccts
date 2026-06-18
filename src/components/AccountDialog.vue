@@ -2,7 +2,7 @@
   <!-- <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue')" max-width="600"> -->
   <v-dialog v-model="modelValue" max-width="500px" persistent>
     <v-card>
-      <v-card-title>{{ formData.accountId ? "Edit Account" : "Add Account" }} </v-card-title>
+      <v-card-title>{{ formData.accountId ? 'Edit Account' : 'Add Account' }}</v-card-title>
       <v-card-text>
         <v-form ref="editForm">
           <v-text-field
@@ -10,8 +10,7 @@
             label="Provider"
             variant="outlined"
             :rules="[providerExistsRule]"
-            required
-          ></v-text-field>
+            required></v-text-field>
           <v-select
             v-model="formData.categoryId"
             label="Category"
@@ -20,15 +19,9 @@
             item-value="id"
             variant="outlined"
             required
-            :rules="[(v) => !!v || 'Category is required']"
-          ></v-select>
+            :rules="[(v) => !!v || 'Category is required']"></v-select>
           <v-text-field v-model="formData.login" label="Login" variant="outlined" clearable></v-text-field>
-          <v-text-field
-            v-model="formData.password"
-            label="Password"
-            variant="outlined"
-            clearable
-          ></v-text-field>
+          <v-text-field v-model="formData.password" label="Password" variant="outlined" clearable></v-text-field>
 
           <!--   -->
           <!-- :type="showPassword ? 'text' : 'password'" -->
@@ -39,32 +32,11 @@
             v-model="formData.accountNbr"
             label="Account Number"
             variant="outlined"
-            clearable
-          ></v-text-field>
-          <v-text-field
-            v-model="formData.loginUrl"
-            label="Login URL"
-            variant="outlined"
-            clearable
-          ></v-text-field>
-          <v-text-field
-            v-model="formData.autoPay"
-            label="Auto Pay Info"
-            variant="outlined"
-            clearable
-          ></v-text-field>
-          <v-text-field
-            v-model="formData.pinNbr"
-            label="PIN Number"
-            variant="outlined"
-            clearable
-          ></v-text-field>
-          <v-textarea
-            v-model="formData.securityQA"
-            label="Security Q&A"
-            variant="outlined"
-            clearable
-          ></v-textarea>
+            clearable></v-text-field>
+          <v-text-field v-model="formData.loginUrl" label="Login URL" variant="outlined" clearable></v-text-field>
+          <v-text-field v-model="formData.autoPay" label="Auto Pay Info" variant="outlined" clearable></v-text-field>
+          <v-text-field v-model="formData.pinNbr" label="PIN Number" variant="outlined" clearable></v-text-field>
+          <v-textarea v-model="formData.securityQA" label="Security Q&A" variant="outlined" clearable></v-textarea>
           <v-textarea v-model="formData.notes" label="Notes" variant="outlined" clearable></v-textarea>
           <v-checkbox v-model="formData.favorite" label="Favorite"></v-checkbox>
         </v-form>
@@ -80,9 +52,9 @@
 
 <script setup>
 // import { defineProps, defineEmits } from "vue";
-import { useCategoryStore } from "@/stores/category";
-import { useAccountStore } from "@/stores/account";
-import { ref, computed } from "vue";
+import { useCategoryStore } from '@/stores/category';
+import { useAccountStore } from '@/stores/account';
+import { ref, computed } from 'vue';
 
 const categoryStore = useCategoryStore();
 const accountStore = useAccountStore();
@@ -91,7 +63,8 @@ const editForm = ref(null);
 
 const providerExistsRule = computed(() => {
   return (value) => {
-    if (!value) return "Provider is required";
+    if (!value) return 'Provider is required';
+    console.log('provider edit', props.formData);
 
     // Normalize input (trim + lowercase if needed)
     const normalized = value.trim().toLowerCase();
@@ -105,7 +78,7 @@ const providerExistsRule = computed(() => {
     );
 
     if (exists) {
-      return "This provider already exists";
+      return 'This provider already exists';
     }
     return true;
   };
@@ -115,7 +88,7 @@ async function saveEdit($event) {
   const { valid } = await editForm.value?.validate();
 
   if (valid) {
-    emit("save", props.formData);
+    emit('save', props.formData);
   }
 }
 const modelValue = defineModel();
@@ -129,5 +102,5 @@ const props = defineProps({
 });
 
 // const emit = defineEmits(["update:modelValue", "save", "cancel"]);
-const emit = defineEmits(["save", "cancel"]);
+const emit = defineEmits(['save', 'cancel']);
 </script>

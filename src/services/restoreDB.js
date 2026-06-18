@@ -7,11 +7,14 @@ import {
   getCountFromServer,
   getDocs,
   Timestamp,
+  query,where
 } from 'firebase/firestore';
 import { app, db } from '@/firebase';
 import { auth, provider } from '@/firebase';
 import { signInWithPopup } from 'firebase/auth';
 import { alertDialog, promptDialog, confirmDialog, blockScreen, unblockScreen } from '@/ui/dialogState.js';
+import { decryptMessage, encryptMessage } from "@/services/enc";
+import { acctEncFlds, getAccts, updateAccts } from "@/services/common";
 
 export async function restoreAllSheets() {
   let auditLog = [];
@@ -365,6 +368,71 @@ console.log(results)
 // `;
 //   return reportHtml;
 }
+
+export async function migrateAndEncryptAccts(catId) {
+
+  console.time("migrationTime");
+
+   const col = collection(db, "accounts");
+   const q = query(col, where("categoryId", "==", catId));
+   const getAccts = await getDocs(q);
+   let legacyAccts = getAccts.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+ 
+
+  try {
+    const migrationPromises = legacyAccts.map(async (obj) => {
+      const sensitivePayload = {};
+      const plaintextRoot = {};
+
+      // 1. Separate and Decrypt the fields item-by-item
+      for (const key of Object.keys(obj)) {
+        if (acctEncFlds.includes(key)) {
+          // If the field exists and has a value, decrypt it first!
+          if (obj[key] !== null && obj[key] !== undefined && obj[key] !== '') {
+            try {
+              // Decrypt the old individual field string back to plain text
+              const decryptedValue = await decryptMessage(obj[key]);
+              sensitivePayload[key] = decryptedValue;
+            } catch (err) {
+              console.error(`Failed to decrypt field [${key}] on doc [${obj.id}]:`, err);
+              // Fallback to original value if decryption fails (or skip)
+              sensitivePayload[key] = obj[key]; 
+            }
+          }
+        } else {
+          // Keep non-sensitive data (provider, categoryId, etc.) in the root layer
+          plaintextRoot[key] = obj[key];
+        }
+      }
+
+      console.log('sensitivePayload', sensitivePayload, plaintextRoot)
+      // 2. Encrypt the entire gathered payload object block into a single string
+      const encryptedString = await encryptMessage(JSON.stringify(sensitivePayload));
+
+      // 3. Return the clean, unified document structure
+      return {
+        ...plaintextRoot,
+        enc: true,
+        encryptedData: encryptedString
+      };
+    });
+
+    // Resolve all 196 account migrations concurrently
+    const migratedResults = await Promise.all(migrationPromises);
+
+    console.log('migratedResults', migratedResults)
+
+    console.timeEnd("migrationTime");
+    console.log(`Successfully prepared ${migratedResults.length} accounts for the new schema!`);
+
+  const bUpd = await updateAccts(migratedResults, true);
+
+    // return migratedResults; // This array is now ready to overwrite your Firestore documents
+  } catch (error) {
+    console.error(`Migration failed: ${error.message}`);
+  }
+}
+  
 
 const stableStringify = (obj) => {
   if (obj === null || typeof obj !== 'object') {

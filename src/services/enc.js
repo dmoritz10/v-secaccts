@@ -1,5 +1,5 @@
-import { updateOption } from "@/services/common";
-import { getKey } from "@/services/keyVault";
+import { updateOption } from '@/services/common';
+import { getKey } from '@/services/keyVault';
 
 // Derive key from password + salt
 async function deriveKey(password, saltBase64) {
@@ -7,20 +7,20 @@ async function deriveKey(password, saltBase64) {
   const base64ToBytes = (base64) => Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 
   const salt = base64ToBytes(saltBase64);
-  const keyMaterial = await crypto.subtle.importKey("raw", textEncoder.encode(password), "PBKDF2", false, [
-    "deriveKey",
+  const keyMaterial = await crypto.subtle.importKey('raw', textEncoder.encode(password), 'PBKDF2', false, [
+    'deriveKey',
   ]);
   const key = await crypto.subtle.deriveKey(
     {
-      name: "PBKDF2",
+      name: 'PBKDF2',
       salt,
       iterations: 100_000,
-      hash: "SHA-256",
+      hash: 'SHA-256',
     },
     keyMaterial,
-    { name: "AES-GCM", length: 256 },
+    { name: 'AES-GCM', length: 256 },
     false,
-    ["encrypt", "decrypt"]
+    ['encrypt', 'decrypt']
   );
   return key;
 }
@@ -40,11 +40,11 @@ async function initializeVerifier(password) {
   // 3️⃣ Create a random verifier string
   const verifierString = crypto
     .getRandomValues(new Uint8Array(16))
-    .reduce((s, b) => s + b.toString(16).padStart(2, "0"), "");
+    .reduce((s, b) => s + b.toString(16).padStart(2, '0'), '');
 
   // 4️⃣ Encrypt that verifier string
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, textEncoder.encode(verifierString));
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, textEncoder.encode(verifierString));
 
   // 5️⃣ Prepare object for Firebase storage
   const verifierData = {
@@ -56,7 +56,7 @@ async function initializeVerifier(password) {
     },
   };
 
-  updateOption("vault", verifierData);
+  updateOption('vault', verifierData);
 
   return verifierData;
 }
@@ -69,7 +69,7 @@ async function encryptMessage(plaintext) {
   let key = getKey();
 
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, textEncoder.encode(plaintext));
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, textEncoder.encode(plaintext));
 
   // Compact: store IV + ciphertext as base64
   const combined = new Uint8Array([...iv, ...new Uint8Array(encrypted)]);
@@ -79,6 +79,8 @@ async function encryptMessage(plaintext) {
 async function decryptMessage(ciphertextBase64) {
   if (!ciphertextBase64) return null;
 
+  console.log('decryptMessage', ciphertextBase64);
+
   const textDecoder = new TextDecoder();
   const base64ToBytes = (base64) => Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   let key = getKey();
@@ -87,7 +89,7 @@ async function decryptMessage(ciphertextBase64) {
   const iv = combined.slice(0, 12);
   const ciphertext = combined.slice(12);
 
-  const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
   return textDecoder.decode(decrypted);
 }
 
@@ -106,7 +108,7 @@ async function verifyPassword(password, stored) {
   try {
     // Try decrypting
     const decryptedVerifier = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: base64ToBytes(verifier.iv) },
+      { name: 'AES-GCM', iv: base64ToBytes(verifier.iv) },
       key,
       base64ToBytes(verifier.data)
     );

@@ -4,8 +4,7 @@
       v-if="!accountStore.isLoaded || !categoryStore.isLoaded"
       indeterminate
       color="primary"
-      class="ma-16 d-flex justify-center"
-    ></v-progress-circular>
+      class="ma-16 d-flex justify-center"></v-progress-circular>
     <template v-else-if="Array.isArray(filteredAccounts)">
       <v-container fluid class="ma-0 pa-0">
         <!-- sheet -->
@@ -20,7 +19,7 @@
                 </v-col>
                 <v-col class="text-center">
                   <h2 class="subtitle-1 grey--text text-center">
-                    {{ categoryName ? categoryName : "All Accounts" }}
+                    {{ categoryName ? categoryName : 'All Accounts' }}
                   </h2>
                 </v-col>
                 <!-- Sandwich / 3-dot menu -->
@@ -39,8 +38,7 @@
                           label="Filter Favorites"
                           value="favorite"
                           hide-details
-                          dense
-                        />
+                          dense />
                       </v-list-item>
 
                       <v-list-item>
@@ -49,8 +47,7 @@
                           label="Filter AutoPay"
                           value="autoPay"
                           hide-details
-                          dense
-                        />
+                          dense />
                       </v-list-item>
                     </v-list>
                   </v-menu>
@@ -84,8 +81,7 @@
               hide-details
               height="20"
               elevation="0"
-              style="background-color: white"
-            />
+              style="background-color: white" />
           </v-col>
         </v-row>
 
@@ -97,8 +93,7 @@
               class="d-flex align-center pa-2 mx-3"
               color="amber-lighten-4"
               :id="'account-' + account.id"
-              @click="goToAccount(account)"
-            >
+              @click="goToAccount(account)">
               <v-card-title class="text-h6 wrap-card-title">
                 {{ account.provider }}
               </v-card-title>
@@ -116,7 +111,7 @@
                 class="transparent-btn close-btn">
                 <v-icon
                   :color="account.favorite ? 'blue' : undefined"
-                  @click.stop="accountStore.toggleFavorite(account.id, account.favorite, account.enc)"
+                  @click.stop="accountStore.toggleFavorite(account.id, account.favorite)"
                 >
                   {{ account.favorite ? "mdi-star" : "mdi-star-outline" }}
                 </v-icon>
@@ -127,8 +122,7 @@
                 flat
                 outlined
                 class="transparent-btn close-btn"
-                @click.stop="accountStore.openAccountDialog(account)"
-              >
+                @click.stop="accountStore.openAccountDialog(account)">
                 <v-icon>mdi-pencil-outline</v-icon>
               </v-btn>
               <v-btn
@@ -137,8 +131,7 @@
                 small
                 outlined
                 class="transparent-btn close-btn"
-                @click.stop="accountStore.deleteAccount(account.id)"
-              >
+                @click.stop="accountStore.deleteAccount(account.id)">
                 <v-icon>mdi-delete-outline</v-icon>
               </v-btn>
             </v-card>
@@ -156,8 +149,7 @@
           accountStore.openAccountDialog({
             categoryId: accountStore.selectedCatId,
           })
-        "
-      >
+        ">
         <v-icon>mdi-plus</v-icon>
       </v-btn>
     </template>
@@ -170,19 +162,18 @@
       v-model="accountStore.dialog"
       :form-data="accountStore.state.formData"
       @save="($event) => handleSave($event)"
-      @cancel="accountStore.closeAccountDialog"
-    />
+      @cancel="accountStore.closeAccountDialog" />
   </v-container>
 </template>
 
 <script setup>
-import { useRouter, useRoute } from "vue-router";
-import { useAccountStore } from "@/stores/account";
-import { useCategoryStore } from "@/stores/category";
-import AccountDialog from "@/components/AccountDialog.vue";
-import { useAuthStore } from "@/stores/auth";
-import { computed, onMounted, ref, watch, nextTick } from "vue";
-import { alertDialog } from "@/ui/dialogState.js";
+import { useRouter, useRoute } from 'vue-router';
+import { useAccountStore } from '@/stores/account';
+import { useCategoryStore } from '@/stores/category';
+import AccountDialog from '@/components/AccountDialog.vue';
+import { useAuthStore } from '@/stores/auth';
+import { computed, onMounted, ref, watch, nextTick } from 'vue';
+import { alertDialog } from '@/ui/dialogState.js';
 
 const router = useRouter();
 const route = useRoute();
@@ -192,20 +183,20 @@ const authStore = useAuthStore();
 const menuOpen = ref(false);
 accountStore.setFilters([]);
 
-const categoryIdFromRoute = computed(() => route.query.id || "");
-const categoryName = computed(() => route.query.name || "");
+const categoryIdFromRoute = computed(() => route.query.id || '');
+const categoryName = computed(() => route.query.name || '');
 
 onMounted(async () => {
   try {
     if (!accountStore.isLoaded) {
       await accountStore.subscribeToAccounts();
-      console.log("Accounts.vue subscribed, accountStore.isLoaded:", accountStore.isLoaded);
+      console.log('Accounts.vue subscribed, accountStore.isLoaded:', accountStore.isLoaded);
     }
   } catch (error) {
-    console.error("Accounts.vue subscribeToAccounts failed:", error);
-    alertDialog("Accounts subscribeToAccounts failed", error);
+    console.error('Accounts.vue subscribeToAccounts failed:', error);
+    alertDialog('Accounts subscribeToAccounts failed', error);
   }
-  console.log("Accounts.vue. onMounted complete");
+  console.log('Accounts.vue. onMounted complete');
 
   if (categoryStore.searchQuery) {
     accountStore.searchQuery = categoryStore.searchQuery;
@@ -221,7 +212,7 @@ watch(
   () => categoryIdFromRoute.value,
   async (newId) => {
     await nextTick();
-    accountStore.selectedCatId = newId || "";
+    accountStore.selectedCatId = newId || '';
   },
   { immediate: true }
 );
@@ -239,33 +230,33 @@ const goToAccount = (account) => {
 
 const returnToCategories = () => {
   router.push({
-    path: "/categories",
+    path: '/categories',
     query: { scrollTo: accountStore.selectedCatId, ts: Date.now() },
   });
 };
 
 const scrollToAccount = (scrollTo) => {
-  if (scrollTo && typeof scrollTo === "string") {
+  if (scrollTo && typeof scrollTo === 'string') {
     nextTick(() => {
-      const container = document.querySelector(".v-container");
+      const container = document.querySelector('.v-container');
       if (container) container.scrollTop = 0;
-      document.querySelectorAll(".account-card").forEach((el) => {
-        el.classList.remove("sheets-focus");
+      document.querySelectorAll('.account-card').forEach((el) => {
+        el.classList.remove('sheets-focus');
       });
       const element = document.getElementById(`account-${scrollTo}`);
       if (element) {
         element.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "nearest",
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest',
         });
-        element.classList.add("sheets-focus");
+        element.classList.add('sheets-focus');
       } else {
         console.warn(`Accounts.vue account element not found: account-${scrollTo}`);
       }
     });
   } else {
-    console.log("Accounts.vue scrollToAccount, no scrollTo provided:", scrollTo);
+    console.log('Accounts.vue scrollToAccount, no scrollTo provided:', scrollTo);
   }
 };
 
@@ -277,7 +268,7 @@ watch(
         scrollToAccount(newQuery.scrollTo);
       });
     } else {
-      console.log("Accounts.vue watch triggered, no scrollTo, initial load or no scroll needed");
+      console.log('Accounts.vue watch triggered, no scrollTo, initial load or no scroll needed');
     }
   },
   { immediate: true, deep: true }
@@ -289,7 +280,7 @@ const handleSave = async (formData) => {
     await nextTick();
     accountStore.closeAccountDialog();
     router.push({
-      path: "/accounts",
+      path: '/accounts',
       query: {
         id: formData.categoryId,
         name: categoryStore.categoryNameFor(formData.categoryId),
@@ -298,8 +289,8 @@ const handleSave = async (formData) => {
       },
     });
   } catch (error) {
-    console.error("Accounts.vue handleSave failed:", error);
-    alertDialog("Accounts.vue handleSave failed", error);
+    console.error('Accounts.vue handleSave failed:', error);
+    alertDialog('Accounts.vue handleSave failed', error);
   }
 };
 </script>
