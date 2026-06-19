@@ -15,9 +15,18 @@ export const useCategoryStore = defineStore('category', () => {
     isLoaded: false,
     selectedCategory: null, // The object currently being edited
     searchQuery: '',
+    isSearchActive: false,
   });
 
   const dialog = ref(false);
+
+  const toggleSearch = () => {
+    if (state.isSearchActive) {
+      // When closing, clear the search so the full list returns
+      state.searchQuery = '';
+    }
+    state.isSearchActive = !state.isSearchActive;
+  };
 
   const unsubscribeCategories = ref(null);
   let isInitialLoad = true;
@@ -198,6 +207,7 @@ export const useCategoryStore = defineStore('category', () => {
     searchQuery,
     filteredCategories,
     numberOfFilteredCategories,
+    toggleSearch,
     subscribeToCategories,
     unsubscribeFromCategories,
     saveCategory,

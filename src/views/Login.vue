@@ -168,7 +168,7 @@ async function submit() {
     clearKey();
     return;
   }
-  // pwd.value = 'Tempdm101!';
+  pwd.value = 'Star123#';
   var key = await verifyPassword(pwd.value, vault);
 
   pwd.value = null;

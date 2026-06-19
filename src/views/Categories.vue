@@ -12,11 +12,16 @@
           <v-col cols="12" class="pb-0 px-0">
             <v-sheet class="mx-3 px-4 pt-6 pb-3 mt-1 mb-0 border" elevation="0" rounded>
               <v-row class="align-center">
-                <v-col cols="1"></v-col>
+                <v-col cols="2"></v-col>
                 <v-col class="text-center">
-                  <h1 class="subtitle-1 grey--text text-center">Secure Accounts</h1>
+                  <h2 class="subtitle-1 grey--text text-center">Secure Accounts</h2>
                 </v-col>
                 <!-- Sandwich / 3-dot menu -->
+                <v-col cols="1" class="d-flex align-center justify-end">
+                  <v-btn icon @click="categoryStore.toggleSearch()">
+                    <v-icon>{{ categoryStore.state.isSearchActive ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
+                  </v-btn>
+                </v-col>
                 <v-col cols="1" class="d-flex justify-end">
                   <v-menu location="bottom-end">
                     <template #activator="{ props }">
@@ -51,13 +56,31 @@
                   </v-menu>
                 </v-col>
               </v-row>
-              <v-row class="ma-0 pa-0">
+              <v-row v-if="categoryStore.state.isSearchActive" class="mx-0 mt-3 px-0 w-100">
+                <v-col cols="12" class="px-0 py-0">
+                  <v-text-field
+                    v-model="categoryStore.state.searchQuery"
+                    placeholder="Search Categories ..."
+                    variant="solo-filled"
+                    rounded="lg"
+                    density="comfortable"
+                    prepend-inner-icon="mdi-magnify"
+                    clearable
+                    hide-details
+                    autofocus
+                    @click:clear="onClearSearch" />
+                  <div class="text-caption text-center text-grey-darken-1 mt-1">
+                    Showing {{ categoryStore.filteredCategories.length }} of {{ categoryStore.state.items.length }}
+                  </div>
+                </v-col>
+              </v-row>
+              <!-- <v-row class="ma-0 pa-0">
                 <v-col class="text-center ma-0 pa-0">
                   <h2 class="text-success ma-0 pa-0">
                     {{ categoryStore.numberOfFilteredCategories }}
                   </h2>
                 </v-col>
-              </v-row>
+              </v-row> -->
             </v-sheet>
           </v-col>
         </v-row>
@@ -65,7 +88,7 @@
         <!-- search -->
         <!-- :model-value="categoryStore.searchQuery" -->
         <!-- @update:modelValue="categoryStore.searchQuery = $event" -->
-        <v-row class="mx-0 px-0 my-0 pb-1" style="background-color: #f9f9f9">
+        <!-- <v-row class="mx-0 px-0 my-0 pb-1" style="background-color: #f9f9f9">
           <v-col cols="12" class="pb-0">
             <v-text-field
               v-model="categoryStore.searchQuery"
@@ -78,7 +101,7 @@
               elevation="0"
               style="background-color: white" />
           </v-col>
-        </v-row>
+        </v-row> -->
 
         <!-- cards -->
         <v-row dense class="mx-0 px-0 mt-0 mb-3 pt-2" style="background-color: #f9f9f9">
@@ -177,6 +200,13 @@ const pwdDialog = ref(null);
 function openChangePasswordDialog() {
   pwdDialog.value.open();
 }
+
+// This handles the "Clear and Hide" logic
+const onClearSearch = () => {
+  categoryStore.searchQuery = '';
+  categoryStore.state.isSearchActive = false;
+  accountStore.searchQuery = '';
+};
 
 onMounted(async () => {
   console.log('Categories.vue mounted, isLoaded:', categoryStore.isLoaded);

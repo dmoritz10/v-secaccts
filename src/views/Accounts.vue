@@ -200,7 +200,7 @@ onMounted(async () => {
 
   if (categoryStore.searchQuery) {
     accountStore.searchQuery = categoryStore.searchQuery;
-  }
+  } else accountStore.searchQuery = '';
 });
 
 const filteredAccounts = computed(() => {
