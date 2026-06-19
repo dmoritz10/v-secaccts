@@ -46,6 +46,7 @@ export const useAccountStore = defineStore('account', () => {
     },
   });
 
+  const selectedAllAccts = ref(false);
   const activeFilters = ref(['']);
 
   const isLoaded = computed(() => state.isLoaded);
@@ -72,7 +73,7 @@ export const useAccountStore = defineStore('account', () => {
   // Modify filteredAccounts to consider selected filters
   const filteredAccounts = computed(() => {
     const filters = activeFilters.value;
-    const catId = selectedCatId.value;
+    const catId = selectedAllAccts.value ? '' : selectedCatId.value;
     // const catId = selectedCatId;
     const query = state.searchQuery ? state.searchQuery.toLowerCase().trim() : '';
     let filtered = state.items || [];

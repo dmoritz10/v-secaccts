@@ -7,16 +7,19 @@
       class="ma-16 d-flex justify-center"></v-progress-circular>
     <template v-else-if="Array.isArray(categoryStore.filteredCategories)">
       <v-container fluid class="ma-0 pa-0" style="height: 100%; overflow: visible">
-        <!-- sheet -->
         <v-row class="position-sticky top-0 mx-0 px-0 mb-2" style="z-index: 20; background-color: #f9f9f9">
           <v-col cols="12" class="pb-0 px-0">
-            <v-sheet class="mx-3 px-4 pt-6 pb-3 mt-1 mb-0 border" elevation="0" rounded>
+            <v-sheet
+              class="mx-3 px-4 pt-6 pb-3 mt-1 mb-0 border position-relative"
+              style="overflow: visible"
+              elevation="0"
+              rounded>
               <v-row class="align-center">
-                <v-col cols="1" class="d-flex justify-end">
-                  <v-menu location="bottom-end">
+                <v-col cols="1" class="d-flex justify-start">
+                  <v-menu v-model="menuOpen" content-class="flush-sheet-menu">
                     <template #activator="{ props }">
-                      <v-btn icon v-bind="props" variant="text">
-                        <v-icon>mdi-menu</v-icon>
+                      <v-btn icon v-bind="props" variant="text" class="no-capsule">
+                        <v-icon>mdi-dots-vertical</v-icon>
                       </v-btn>
                     </template>
 
@@ -34,27 +37,21 @@
                       <v-list-item @click="handleSignOut">
                         <v-list-item-title>Sign out</v-list-item-title>
                       </v-list-item>
-                      <v-list-item v-if="authStore.currUser.admin" @click="verifyRestore('accounts', 'copy accounts')">
-                        <v-list-item-title>Verify Restore</v-list-item-title>
-                      </v-list-item>
-                      <v-list-item
-                        v-if="authStore.currUser.admin"
-                        @click="migrateAndEncryptAccts('gifx8ESDzyLoLA9SI5QP')">
-                        <v-list-item-title>Migrate all Accounts to new structure</v-list-item-title>
-                      </v-list-item>
                     </v-list>
                   </v-menu>
                 </v-col>
+
                 <v-col class="text-center">
                   <h2 class="subtitle-1 grey--text text-center">Secure Accounts</h2>
                 </v-col>
-                <!-- Sandwich / 3-dot menu -->
+
                 <v-col cols="1" class="d-flex align-center justify-end">
                   <v-btn icon variant="text" class="no-capsule" @click="categoryStore.toggleSearch()">
                     <v-icon>{{ categoryStore.state.isSearchActive ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
                   </v-btn>
                 </v-col>
               </v-row>
+
               <v-row v-if="categoryStore.state.isSearchActive" class="mx-0 mt-3 px-0 w-100">
                 <v-col cols="12" class="px-0 py-0">
                   <v-text-field
@@ -73,36 +70,10 @@
                   </div>
                 </v-col>
               </v-row>
-              <!-- <v-row class="ma-0 pa-0">
-                <v-col class="text-center ma-0 pa-0">
-                  <h2 class="text-success ma-0 pa-0">
-                    {{ categoryStore.numberOfFilteredCategories }}
-                  </h2>
-                </v-col>
-              </v-row> -->
             </v-sheet>
           </v-col>
         </v-row>
 
-        <!-- search -->
-        <!-- :model-value="categoryStore.searchQuery" -->
-        <!-- @update:modelValue="categoryStore.searchQuery = $event" -->
-        <!-- <v-row class="mx-0 px-0 my-0 pb-1" style="background-color: #f9f9f9">
-          <v-col cols="12" class="pb-0">
-            <v-text-field
-              v-model="categoryStore.searchQuery"
-              label="Search Categories by Account Providers"
-              prepend-inner-icon="mdi-magnify"
-              clearable
-              class="search-field border rounded"
-              hide-details
-              height="20"
-              elevation="0"
-              style="background-color: white" />
-          </v-col>
-        </v-row> -->
-
-        <!-- cards -->
         <v-row dense class="mx-0 px-0 mt-0 mb-3 pt-2" style="background-color: #f9f9f9">
           <v-col v-for="category in categoryStore.filteredCategories" :key="category.id" cols="12">
             <v-card
@@ -145,7 +116,6 @@
         </v-row>
       </v-container>
 
-      <!-- add button -->
       <v-btn
         icon
         fab
@@ -155,14 +125,14 @@
         <v-icon>mdi-plus</v-icon>
       </v-btn>
     </template>
-    <!-- Category Dialog -->
+
     <CategoryDialog
       v-if="categoryStore.dialog"
       v-model="categoryStore.dialog"
       :category="categoryStore.state.selectedCategory"
       @save="categoryStore.saveCategory"
       @cancel="categoryStore.closeCategoryDialog" />
-    <!-- Change password Dialog -->
+
     <template>
       <v-btn @click="openChangePasswordDialog">Change Password</v-btn>
       <PasswordChangeDialog ref="pwdDialog" />
@@ -177,7 +147,7 @@ import { useCategoryStore } from '@/stores/category';
 import { useAccountStore } from '@/stores/account';
 import { useAuthStore } from '@/stores/auth';
 import { auth } from '../firebase';
-import { signOut, getIdToken } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import CategoryDialog from '@/components/CategoryDialog.vue';
 import PasswordChangeDialog from '@/components/PasswordChangeDialog.vue';
 import { alertDialog } from '@/ui/dialogState.js';
@@ -189,6 +159,7 @@ import { getApp } from 'firebase/app';
 import { verifyRestore, migrateAndEncryptAccts } from '@/services/restoreDB';
 import { VERSION, BUILD_DATE } from '@/services/version-info.js';
 
+const menuOpen = ref(false);
 const router = useRouter();
 const route = useRoute();
 const categoryStore = useCategoryStore();
@@ -200,7 +171,6 @@ function openChangePasswordDialog() {
   pwdDialog.value.open();
 }
 
-// This handles the "Clear and Hide" logic
 const onClearSearch = () => {
   categoryStore.searchQuery = '';
   categoryStore.state.isSearchActive = false;
@@ -208,20 +178,16 @@ const onClearSearch = () => {
 };
 
 onMounted(async () => {
-  console.log('Categories.vue mounted, isLoaded:', categoryStore.isLoaded);
   try {
     await categoryStore.subscribeToCategories();
   } catch (error) {
-    console.error('Categories.vue subscribeToCategories failed:', error);
     alertDialog('Categories.vue subscribeToCategories failed', error);
   }
   try {
     await accountStore.subscribeToAccounts();
   } catch (error) {
-    console.error('accountStore subscribeToAccounts failed:', error);
     alertDialog('accountStore subscribeToAccounts failed', error);
   }
-  console.log('catefories.vue. onMounted complete');
 });
 
 watch(
@@ -231,20 +197,15 @@ watch(
       nextTick(() => {
         scrollToCategory(newQuery.scrollTo);
       });
-    } else {
-      console.log('Categories.vue watch triggered, no scrollTo, initial load or no scroll needed');
     }
   },
   { immediate: true, deep: true }
 );
 
-// Navigate to a specific category
 const goToCategoryAccounts = (catId) => {
-  // Set categoryId in the store
+  accountStore.selectedAllAccts = false;
   accountStore.selectedCatId = catId;
-  // Reset filters so no previous filter is applied
   accountStore.setFilters([]);
-  // Navigate to Accounts.vue
   router.push({
     path: `/accounts`,
     query: {
@@ -255,13 +216,10 @@ const goToCategoryAccounts = (catId) => {
   });
 };
 
-// Navigate to All Accounts
 const goToAllAccounts = () => {
-  // Clear categoryId in the store to show all accounts
+  accountStore.selectedAllAccts = true;
   accountStore.selectedCatId = '';
-  // Reset filters
   accountStore.setFilters([]);
-  // Navigate to Accounts.vue
   router.push('/accounts');
 };
 
@@ -281,12 +239,8 @@ const scrollToCategory = (scrollTo) => {
           inline: 'nearest',
         });
         element.classList.add('sheets-focus');
-      } else {
-        console.warn(`Categories.vue category element not found: category-${scrollTo}`);
       }
     });
-  } else {
-    console.log('Categories.vue scrollToCategory, no scrollTo provided:', scrollTo);
   }
 };
 
@@ -296,9 +250,7 @@ const handleSignOut = async () => {
     authStore.clearUser();
     clearKey();
     router.replace('/');
-    console.log('Sign-out successful');
   } catch (error) {
-    console.error('Sign-out error:', error);
     authStore.clearUser();
     clearKey();
     router.replace('/');
@@ -315,34 +267,29 @@ const about = async () => {
   const res = await fetch('/about.md');
   if (!res.ok) throw new Error(`HTTP ${res.status} while fetching about.md`);
   const markdown = await res.text();
-  // Convert Markdown → HTML
   let html = marked.parse(markdown);
   html = html.replace('VERSION', VERSION).replace('DATE', BUILD_DATE);
   alertDialog('About Secure Accounts', html);
 };
-
-async function debugAuth() {
-  auth.currentUser
-    ?.getIdToken(true)
-    .then((token) => console.log('Token refreshed successfully'))
-    .catch((err) => console.error('Token refresh failed', err));
-
-  const storage = getStorage(getApp());
-  console.log('Resolved bucket:', storage.bucket);
-}
 </script>
 
 <style scoped>
 .crypt-btn {
-  font-size: 12px !important; /* Smaller text for account buttons */
-  text-transform: lowercase !important; /* Lowercase text */
-  font-weight: bold !important; /* Bold text */
-  padding-left: 4px !important; /* Reduced left padding */
-  padding-right: 4px !important; /* Reduced right padding */
+  font-size: 12px !important;
+  text-transform: lowercase !important;
+  font-weight: bold !important;
+  padding-left: 4px !important;
+  padding-right: 4px !important;
 }
 
 .no-capsule :deep(.v-btn__overlay),
 .no-capsule :deep(.v-btn__underlay) {
   display: none !important;
+}
+
+.flush-sheet-menu {
+  position: fixed !important;
+  left: 12px !important;
+  top: 73px !important; /* Adjust this number to match the exact height of your sheet */
 }
 </style>

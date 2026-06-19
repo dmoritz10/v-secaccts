@@ -212,7 +212,7 @@ watch(
   () => categoryIdFromRoute.value,
   async (newId) => {
     await nextTick();
-    accountStore.selectedCatId = newId || '';
+    accountStore.selectedAllAccts.value ? '' : (accountStore.selectedCatId = newId || '');
   },
   { immediate: true }
 );
