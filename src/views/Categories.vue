@@ -12,21 +12,11 @@
           <v-col cols="12" class="pb-0 px-0">
             <v-sheet class="mx-3 px-4 pt-6 pb-3 mt-1 mb-0 border" elevation="0" rounded>
               <v-row class="align-center">
-                <v-col cols="2"></v-col>
-                <v-col class="text-center">
-                  <h2 class="subtitle-1 grey--text text-center">Secure Accounts</h2>
-                </v-col>
-                <!-- Sandwich / 3-dot menu -->
-                <v-col cols="1" class="d-flex align-center justify-end">
-                  <v-btn icon variant="text" class="no-capsule" @click="categoryStore.toggleSearch()">
-                    <v-icon>{{ categoryStore.state.isSearchActive ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
-                  </v-btn>
-                </v-col>
                 <v-col cols="1" class="d-flex justify-end">
                   <v-menu location="bottom-end">
                     <template #activator="{ props }">
                       <v-btn icon v-bind="props" variant="text">
-                        <v-icon>mdi-dots-vertical</v-icon>
+                        <v-icon>mdi-menu</v-icon>
                       </v-btn>
                     </template>
 
@@ -54,6 +44,15 @@
                       </v-list-item>
                     </v-list>
                   </v-menu>
+                </v-col>
+                <v-col class="text-center">
+                  <h2 class="subtitle-1 grey--text text-center">Secure Accounts</h2>
+                </v-col>
+                <!-- Sandwich / 3-dot menu -->
+                <v-col cols="1" class="d-flex align-center justify-end">
+                  <v-btn icon variant="text" class="no-capsule" @click="categoryStore.toggleSearch()">
+                    <v-icon>{{ categoryStore.state.isSearchActive ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
+                  </v-btn>
                 </v-col>
               </v-row>
               <v-row v-if="categoryStore.state.isSearchActive" class="mx-0 mt-3 px-0 w-100">
