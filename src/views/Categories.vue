@@ -18,7 +18,7 @@
                 </v-col>
                 <!-- Sandwich / 3-dot menu -->
                 <v-col cols="1" class="d-flex align-center justify-end">
-                  <v-btn icon @click="categoryStore.toggleSearch()">
+                  <v-btn icon variant="text" class="no-capsule" @click="categoryStore.toggleSearch()">
                     <v-icon>{{ categoryStore.state.isSearchActive ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
                   </v-btn>
                 </v-col>
@@ -340,5 +340,10 @@ async function debugAuth() {
   font-weight: bold !important; /* Bold text */
   padding-left: 4px !important; /* Reduced left padding */
   padding-right: 4px !important; /* Reduced right padding */
+}
+
+.no-capsule :deep(.v-btn__overlay),
+.no-capsule :deep(.v-btn__underlay) {
+  display: none !important;
 }
 </style>
