@@ -1,11 +1,11 @@
 <template>
   <v-container fluid class="h-100 ma-0 pa-0">
     <v-progress-circular
-      v-if="!accountStore.isLoaded || !categoryStore.isLoaded"
+      v-if="!documentStore.isLoaded || !docCategoryStore.isLoaded"
       indeterminate
       color="primary"
       class="ma-16 d-flex justify-center"></v-progress-circular>
-    <template v-else-if="Array.isArray(filteredAccounts)">
+    <template v-else-if="Array.isArray(filteredDocuments)">
       <v-container fluid class="ma-0 pa-0">
         <!-- sheet -->
         <v-row class="position-sticky top-0 mx-0 px-0 mb-2" style="z-index: 20; background-color: #f9f9f9">
@@ -19,7 +19,7 @@
                 </v-col>
                 <v-col class="text-center">
                   <h1 class="subtitle-1 grey--text text-center">
-                    {{ accountStore.selectedAllAccts ? 'All Accounts' : categoryName }}
+                    {{ documentStore.selectedAllDocs ? 'All Documents' : documentName }}
                   </h1>
                 </v-col>
                 <!-- Sandwich / 3-dot menu -->
@@ -34,18 +34,9 @@
                     <v-list>
                       <v-list-item>
                         <v-checkbox
-                          v-model="accountStore.activeFilters"
+                          v-model="documentStore.activeFilters"
                           label="Filter Favorites"
                           value="favorite"
-                          hide-details
-                          dense />
-                      </v-list-item>
-
-                      <v-list-item>
-                        <v-checkbox
-                          v-model="accountStore.activeFilters"
-                          label="Filter AutoPay"
-                          value="autoPay"
                           hide-details
                           dense />
                       </v-list-item>
@@ -56,10 +47,10 @@
               <v-row class="ma-0 pa-0">
                 <v-col class="text-center ma-0 pa-0" col="3">
                   <h2 class="text-success ma-0 pa-0">
-                    {{ filteredAccounts.length }}
+                    {{ filteredDocuments.length }}
                   </h2>
                   <!-- <p class="subtitle-1 grey--text text-center ma-0 pa-0">
-                    Accounts
+                    Documents
                   </p> -->
                 </v-col>
               </v-row>
@@ -68,12 +59,12 @@
         </v-row>
 
         <!-- search -->
-        <!-- :model-value="accountStore.searchQuery" -->
-        <!-- @update:modelValue="accountStore.searchQuery = $event" -->
+        <!-- :model-value="documentStore.searchQuery" -->
+        <!-- @update:modelValue="documentStore.searchQuery = $event" -->
         <v-row class="mx-0 px-0 my-0 pb-1" style="background-color: #f9f9f9">
           <v-col cols="12" class="pb-0">
             <v-text-field
-              v-model="accountStore.searchQuery"
+              v-model="documentStore.searchQuery"
               label="Search Providers"
               prepend-inner-icon="mdi-magnify"
               clearable
@@ -87,7 +78,7 @@
 
         <!-- cards -->
         <v-row dense class="mx-0 px-0 mt-0 mb-3 pt-2" style="background-color: #f9f9f9">
-          <v-col v-for="account in filteredAccounts" :key="account.id" cols="12">
+          <v-col v-for="account in filteredDocuments" :key="account.id" cols="12">
             <v-card
               elevation="2"
               class="d-flex align-center pa-2 mx-3"
@@ -95,21 +86,16 @@
               :id="'account-' + account.id"
               @click="goToAccount(account)">
               <v-card-title class="text-h6 wrap-card-title">
-                {{ account.provider }}
+                {{ account.name }}
               </v-card-title>
               <v-spacer></v-spacer>
               <!-- prettier-ignore -->
-              <v-btn 
-                v-if="account.autoPay" 
-                icon small flat outlined 
-                class="transparent-btn close-btn">
-                <v-icon>mdi-cash-sync</v-icon>
-              </v-btn>
+
               <!-- prettier-ignore -->
               <v-btn
                 icon small flat outlined
                 class="transparent-btn close-btn"
-                @click.stop="accountStore.cycleFavorite(account.id, account.favorite)">
+                @click.stop="documentStore.cycleFavorite(account.id, account.favorite)">
                 <v-icon :color="account.favorite === true ? 'blue' : (account.favorite || undefined)">
                   {{ account.favorite ? 'mdi-star' : 'mdi-star-outline' }}
                 </v-icon>
@@ -120,7 +106,7 @@
                 flat
                 outlined
                 class="transparent-btn close-btn"
-                @click.stop="accountStore.openAccountDialog(account)">
+                @click.stop="documentStore.openDocumentDialog(account)">
                 <v-icon>mdi-pencil-outline</v-icon>
               </v-btn>
               <v-btn
@@ -129,7 +115,7 @@
                 small
                 outlined
                 class="transparent-btn close-btn"
-                @click.stop="accountStore.deleteAccount(account.id)">
+                @click.stop="documentStore.deleteDocument(account.id)">
                 <v-icon>mdi-delete-outline</v-icon>
               </v-btn>
             </v-card>
@@ -144,75 +130,74 @@
         class="add-btn align-center justify-center"
         style="position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%)"
         @click="
-          accountStore.openAccountDialog({
-            categoryId: accountStore.selectedCatId,
+          documentStore.openDocumentDialog({
+            docCategoryId: documentStore.selectedDocCatId,
           })
         ">
         <v-icon>mdi-plus</v-icon>
       </v-btn>
     </template>
     <div v-else>
-      <p>Error: Failed to load accounts. Please check your connection and try again.</p>
+      <p>Error: Failed to load documents. Please check your connection and try again.</p>
     </div>
 
     <!-- Account Dialog -->
-    <AccountDialog
-      v-model="accountStore.dialog"
-      :form-data="accountStore.state.formData"
+    <DocumentDialog
+      v-model="documentStore.dialog"
+      :form-data="documentStore.state.formData"
       @save="($event) => handleSave($event)"
-      @cancel="accountStore.closeAccountDialog" />
+      @cancel="documentStore.closeAccountDialog" />
   </v-container>
 </template>
 
 <script setup>
 import { useRouter, useRoute } from 'vue-router';
-import { useAccountStore } from '@/stores/account';
-import { useCategoryStore } from '@/stores/category';
-import AccountDialog from '@/components/AccountDialog.vue';
+import { useDocumentStore } from '@/stores/document';
+import { useDocCategoryStore } from '@/stores/docCategory';
+import DocumentDialog from '@/components/DocumentDialog.vue';
 import { useAuthStore } from '@/stores/auth';
 import { computed, onMounted, ref, watch, nextTick } from 'vue';
 import { alertDialog } from '@/ui/dialogState.js';
 
 const router = useRouter();
 const route = useRoute();
-const accountStore = useAccountStore();
-const categoryStore = useCategoryStore();
+const documentStore = useDocumentStore();
+const docCategoryStore = useDocCategoryStore();
 const authStore = useAuthStore();
 const menuOpen = ref(false);
-accountStore.setFilters([]);
+documentStore.setFilters([]);
 
-const categoryIdFromRoute = computed(() => route.query.id || '');
-const categoryName = computed(() => route.query.name || '');
+const docCategoryIdFromRoute = computed(() => route.query.id || '');
+const documentName = computed(() => route.query.name || '');
 
 onMounted(async () => {
   try {
-    if (!accountStore.isLoaded) {
-      await accountStore.subscribeToAccounts();
-      console.log('Accounts.vue subscribed, accountStore.isLoaded:', accountStore.isLoaded);
+    if (!documentStore.isLoaded) {
+      await documentStore.subscribeToAccounts();
+      console.log('Documents.vue subscribed, documentStore.isLoaded:', documentStore.isLoaded);
     }
   } catch (error) {
-    console.error('Accounts.vue subscribeToAccounts failed:', error);
-    alertDialog('Accounts subscribeToAccounts failed', error);
+    console.error('Documents.vue subscribeToAccounts failed:', error);
+    alertDialog('Documents subscribeToAccounts failed', error);
   }
-  console.log('Accounts.vue. onMounted complete');
+  console.log('Documents.vue. onMounted complete');
 
-  if (categoryStore.searchQuery) {
-    accountStore.searchQuery = categoryStore.searchQuery;
-  } else accountStore.searchQuery = '';
+  if (docCategoryStore.searchQuery) {
+    documentStore.searchQuery = docCategoryStore.searchQuery;
+  } else documentStore.searchQuery = '';
 });
 
-const filteredAccounts = computed(() => {
-  const accounts = accountStore.filteredAccounts;
+const filteredDocuments = computed(() => {
+  const accounts = documentStore.filteredDocuments;
   return accounts;
 });
 
 watch(
-  () => categoryIdFromRoute.value,
-
+  () => docCategoryIdFromRoute.value,
   async (newId) => {
     await nextTick();
-    if (!accountStore.selectedAllAccts) {
-      accountStore.selectedCatId = newId || '';
+    if (!documentStore.selectedAllDocs) {
+      documentStore.selectedDocCatId = newId || '';
     }
   },
   { immediate: true }
@@ -220,10 +205,10 @@ watch(
 
 const goToAccount = (account) => {
   router.push({
-    path: `/account/${account.id}`,
+    path: `/documents/${account.id}`,
     query: {
-      id: accountStore.selectedCatId,
-      name: categoryStore.categoryNameFor(accountStore.selectedCatId),
+      id: documentStore.selectedDocCatId,
+      name: docCategoryStore.docCategoryNameFor(documentStore.selectedDocCatId),
       ts: Date.now(),
     },
   });
@@ -231,8 +216,8 @@ const goToAccount = (account) => {
 
 const returnToCategories = () => {
   router.push({
-    path: '/categories',
-    query: { scrollTo: accountStore.selectedCatId, ts: Date.now() },
+    path: '/docCategories',
+    query: { scrollTo: documentStore.selectedDocCatId, ts: Date.now() },
   });
 };
 
@@ -253,11 +238,11 @@ const scrollToAccount = (scrollTo) => {
         });
         element.classList.add('sheets-focus');
       } else {
-        console.warn(`Accounts.vue account element not found: account-${scrollTo}`);
+        console.warn(`Documents.vue account element not found: account-${scrollTo}`);
       }
     });
   } else {
-    console.log('Accounts.vue scrollToAccount, no scrollTo provided:', scrollTo);
+    console.log('Documents.vue scrollToAccount, no scrollTo provided:', scrollTo);
   }
 };
 
@@ -275,21 +260,21 @@ watch(
 
 const handleSave = async (formData) => {
   try {
-    const acctId = await accountStore.saveAccount(formData);
+    const acctId = await documentStore.saveDocument(formData);
     await nextTick();
-    accountStore.closeAccountDialog();
+    documentStore.closeAccountDialog();
     router.push({
-      path: '/accounts',
+      path: '/documents',
       query: {
-        id: formData.categoryId,
-        name: categoryStore.categoryNameFor(formData.categoryId),
+        id: formData.docCategoryId,
+        name: docCategoryStore.docCategoryNameFor(formData.docCategoryId),
         scrollTo: acctId,
         ts: Date.now(),
       },
     });
   } catch (error) {
-    console.error('Accounts.vue handleSave failed:', error);
-    alertDialog('Accounts.vue handleSave failed', error);
+    console.error('Documents.vue handleSave failed:', error);
+    alertDialog('Documents.vue handleSave failed', error);
   }
 };
 </script>

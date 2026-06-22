@@ -1,11 +1,11 @@
 <template>
   <v-container fluid class="h-100 ma-0 pa-0">
     <v-progress-circular
-      v-if="!categoryStore.isLoaded"
+      v-if="!docCategoryStore.isLoaded"
       indeterminate
       color="primary"
       class="ma-16 d-flex justify-center"></v-progress-circular>
-    <template v-else-if="Array.isArray(categoryStore.filteredCategories)">
+    <template v-else-if="Array.isArray(docCategoryStore.filteredDocCategories)">
       <v-container fluid class="ma-0 pa-0" style="height: 100%; overflow: visible">
         <v-row class="position-sticky top-0 mx-0 px-0 mb-2" style="z-index: 20; background-color: #f9f9f9">
           <v-col cols="12" class="pb-0 px-0">
@@ -24,11 +24,9 @@
                     </template>
 
                     <v-list>
-                      <v-list-item v-if="authStore.currUser.admin" @click="openChangePasswordDialog">
-                        <v-list-item-title>Change password</v-list-item-title>
-                      </v-list-item>
-                      <v-list-item @click="goToAllAccounts">
-                        <v-list-item-title>Show all Accounts</v-list-item-title>
+                      <
+                      <v-list-item @click="goToAllDocuments">
+                        <v-list-item-title>Show all Documents</v-list-item-title>
                       </v-list-item>
                       <v-list-item @click="about">
                         <v-list-item-title>About</v-list-item-title>
@@ -42,20 +40,20 @@
                 </v-col>
 
                 <v-col class="text-center">
-                  <h1 class="subtitle-1 grey--text text-center">Accounts</h1>
+                  <h1 class="subtitle-1 grey--text text-center">Documents</h1>
                 </v-col>
 
                 <v-col cols="1" class="d-flex align-center justify-end">
-                  <v-btn icon variant="text" class="no-capsule" @click="categoryStore.toggleSearch()">
-                    <v-icon>{{ categoryStore.state.isSearchActive ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
+                  <v-btn icon variant="text" class="no-capsule" @click="docCategoryStore.toggleSearch()">
+                    <v-icon>{{ docCategoryStore.state.isSearchActive ? 'mdi-close' : 'mdi-magnify' }}</v-icon>
                   </v-btn>
                 </v-col>
               </v-row>
 
-              <v-row v-if="categoryStore.state.isSearchActive" class="mx-0 mt-3 px-0 w-100">
+              <v-row v-if="docCategoryStore.state.isSearchActive" class="mx-0 mt-3 px-0 w-100">
                 <v-col cols="12" class="px-0 py-0">
                   <v-text-field
-                    v-model="categoryStore.state.searchQuery"
+                    v-model="docCategoryStore.state.searchQuery"
                     placeholder="Search Categories ..."
                     variant="solo-filled"
                     rounded="lg"
@@ -66,7 +64,8 @@
                     autofocus
                     @click:clear="onClearSearch" />
                   <div class="text-caption text-center text-grey-darken-1 mt-1">
-                    Showing {{ categoryStore.filteredCategories.length }} of {{ categoryStore.state.items.length }}
+                    Showing {{ docCategoryStore.filteredDocCategories.length }} of
+                    {{ docCategoryStore.state.items.length }}
                   </div>
                 </v-col>
               </v-row>
@@ -75,23 +74,23 @@
         </v-row>
 
         <v-row dense class="mx-0 px-0 mt-0 mb-3 pt-2" style="background-color: #f9f9f9">
-          <v-col v-for="category in categoryStore.filteredCategories" :key="category.id" cols="12">
+          <v-col v-for="docCategory in docCategoryStore.filteredDocCategories" :key="docCategory.id" cols="12">
             <v-card
               elevation="2"
               class="d-flex align-center pa-2 mx-3"
               color="amber-lighten-4"
-              :id="`category-${category.id}`"
-              @click="goToCategoryAccounts(category.id)">
+              :id="`docCategory-${docCategory.id}`"
+              @click="goToDocCategoryAccounts(docCategory.id)">
               <v-card-title class="text-h6 wrap-card-title">
-                {{ category.name }}
+                {{ docCategory.name }}
               </v-card-title>
               <v-spacer></v-spacer>
               <v-btn
                 flat
                 outlined
-                :class="['crypt-btn', 'close-btn', category.enc ? 'bg-red-lighten-2' : 'bg-green-lighten-2']"
-                @click.stop="cryptCat(category)">
-                {{ category.enc ? 'decrypt' : 'encrypt' }}
+                :class="['crypt-btn', 'close-btn', docCategory.enc ? 'bg-red-lighten-2' : 'bg-green-lighten-2']"
+                @click.stop="cryptCat(docCategory)">
+                {{ docCategory.enc ? 'decrypt' : 'encrypt' }}
               </v-btn>
               <v-btn
                 icon
@@ -99,7 +98,7 @@
                 flat
                 outlined
                 class="transparent-btn close-btn py-1"
-                @click.stop="categoryStore.openCategoryDialog(category)">
+                @click.stop="docCategoryStore.openDocCategoryDialog(docCategory)">
                 <v-icon>mdi-pencil-outline</v-icon>
               </v-btn>
               <v-btn
@@ -108,7 +107,7 @@
                 small
                 outlined
                 class="transparent-btn close-btn"
-                @click.stop="categoryStore.deleteCategory(category.id)">
+                @click.stop="docCategoryStore.deleteDocCategory(docCategory.id)">
                 <v-icon>mdi-delete-outline</v-icon>
               </v-btn>
             </v-card>
@@ -126,35 +125,29 @@
           left: 50%;
           transform: translateX(-50%);
         "
-        @click="categoryStore.openCategoryDialog()">
+        @click="docCategoryStore.openDocCategoryDialog()">
         <v-icon>mdi-plus</v-icon>
       </v-btn>
     </template>
 
-    <CategoryDialog
-      v-if="categoryStore.dialog"
-      v-model="categoryStore.dialog"
-      :category="categoryStore.state.selectedCategory"
-      @save="categoryStore.saveCategory"
-      @cancel="categoryStore.closeCategoryDialog" />
-
-    <template>
-      <v-btn @click="openChangePasswordDialog">Change Password</v-btn>
-      <PasswordChangeDialog ref="pwdDialog" />
-    </template>
+    <DocCategoryDialog
+      v-if="docCategoryStore.dialog"
+      v-model="docCategoryStore.dialog"
+      :docCategory="docCategoryStore.state.selectedDocCategory"
+      @save="docCategoryStore.saveDocCategory"
+      @cancel="docCategoryStore.closeDocCategoryDialog" />
   </v-container>
 </template>
 
 <script setup>
 import { ref, watch, nextTick, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useCategoryStore } from '@/stores/category';
-import { useAccountStore } from '@/stores/account';
+import { useDocCategoryStore } from '@/stores/docCategory';
+import { useDocumentStore } from '@/stores/document';
 import { useAuthStore } from '@/stores/auth';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
-import CategoryDialog from '@/components/CategoryDialog.vue';
-import PasswordChangeDialog from '@/components/PasswordChangeDialog.vue';
+import DocCategoryDialog from '@/components/DocCategoryDialog.vue';
 import { alertDialog } from '@/ui/dialogState.js';
 import { encryptCat, decryptCat } from '@/services/common';
 import { clearKey } from '@/services/keyVault';
@@ -166,31 +159,27 @@ import { VERSION, BUILD_DATE } from '@/services/version-info.js';
 const menuOpen = ref(false);
 const router = useRouter();
 const route = useRoute();
-const categoryStore = useCategoryStore();
-const accountStore = useAccountStore();
+const docCategoryStore = useDocCategoryStore();
+const documentStore = useDocumentStore();
 const authStore = useAuthStore();
 const pwdDialog = ref(null);
 
-function openChangePasswordDialog() {
-  pwdDialog.value.open();
-}
-
 const onClearSearch = () => {
-  categoryStore.searchQuery = '';
-  categoryStore.state.isSearchActive = false;
-  accountStore.searchQuery = '';
+  docCategoryStore.searchQuery = '';
+  docCategoryStore.state.isSearchActive = false;
+  documentStore.searchQuery = '';
 };
 
 onMounted(async () => {
   try {
-    await categoryStore.subscribeToCategories();
+    await docCategoryStore.subscribeToDocCategories();
   } catch (error) {
-    alertDialog('Categories.vue subscribeToCategories failed', error);
+    alertDialog('Categories.vue subscribeToDocCategories failed', error);
   }
   try {
-    await accountStore.subscribeToAccounts();
+    await documentStore.subscribeToDocuments();
   } catch (error) {
-    alertDialog('accountStore subscribeToAccounts failed', error);
+    alertDialog('documentStore subscribeToDocuments failed', error);
   }
 });
 
@@ -199,45 +188,45 @@ watch(
   (newQuery) => {
     if (newQuery.scrollTo) {
       nextTick(() => {
-        scrollToCategory(newQuery.scrollTo);
+        scrollToDocCategory(newQuery.scrollTo);
       });
     }
   },
   { immediate: true, deep: true }
 );
 
-const goToCategoryAccounts = (catId) => {
-  console.log('goToCategoryAccounts');
-  accountStore.selectedAllAccts = false;
-  accountStore.selectedCatId = catId;
-  accountStore.setFilters([]);
+const goToDocCategoryAccounts = (catId) => {
+  console.log('goToDocCategoryAccounts');
+  documentStore.selectedAllDocs = false;
+  documentStore.selectedDocCatId = catId;
+  documentStore.setFilters([]);
   router.push({
-    path: `/accounts`,
+    path: `/documents`,
     query: {
       id: catId,
-      name: categoryStore.categoryNameFor(catId),
+      name: docCategoryStore.docCategoryNameFor(catId),
       ts: Date.now(),
     },
   });
 };
 
-const goToAllAccounts = () => {
-  accountStore.selectedAllAccts = true;
-  accountStore.selectedCatId = '';
-  console.log('goToAllAccounts');
-  accountStore.setFilters([]);
-  router.push('/accounts');
+const goToAllDocuments = () => {
+  documentStore.selectedAllDocs = true;
+  documentStore.selectedDocCatId = '';
+  console.log('goToAllDocuments');
+  documentStore.setFilters([]);
+  router.push('/documents');
 };
 
-const scrollToCategory = (scrollTo) => {
+const scrollToDocCategory = (scrollTo) => {
   if (scrollTo && typeof scrollTo === 'string') {
     nextTick(() => {
       const container = document.querySelector('.v-container');
       if (container) container.scrollTop = 0;
-      document.querySelectorAll('.category-card').forEach((el) => {
+      document.querySelectorAll('.docCategory-card').forEach((el) => {
         el.classList.remove('sheets-focus');
       });
-      const element = document.getElementById(`category-${scrollTo}`);
+      const element = document.getElementById(`docCategory-${scrollTo}`);
       if (element) {
         element.scrollIntoView({
           behavior: 'smooth',
@@ -265,8 +254,8 @@ const handleSignOut = async () => {
 
 const cryptCat = async (cat) => {
   if (cat.enc) {
-    await decryptCat(cat);
-  } else await encryptCat(cat);
+    await decryptCat(cat, 'documents');
+  } else await encryptCat(cat, 'documents');
 };
 
 const about = async () => {

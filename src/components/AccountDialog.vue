@@ -64,7 +64,6 @@ const editForm = ref(null);
 const providerExistsRule = computed(() => {
   return (value) => {
     if (!value) return 'Provider is required';
-    console.log('provider edit', props.formData);
 
     // Normalize input (trim + lowercase if needed)
     const normalized = value.trim().toLowerCase();

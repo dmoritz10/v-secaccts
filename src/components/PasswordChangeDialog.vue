@@ -12,7 +12,8 @@
           type="password"
           variant="outlined"
           :error="confirmError"
-          :error-messages="confirmErrorMsg" />
+          :error-messages="confirmErrorMsg"
+          @blur="confirmTouched = true" />
       </v-card-text>
 
       <v-card-actions>
@@ -52,7 +53,10 @@ const show = ref(false);
 const currentPwd = ref('');
 const newPwd = ref('');
 const confirmPwd = ref('');
+const confirmTouched = ref(false);
+
 const confirmErrorMsg = computed(() => {
+  if (!confirmTouched.value) return '';
   if (!confirmPwd.value) {
     return 'Please confirm your password';
   }
@@ -74,6 +78,7 @@ function open() {
   currentPwd.value = '';
   newPwd.value = '';
   confirmPwd.value = '';
+  confirmTouched.value = false;
   show.value = true;
 }
 
@@ -114,7 +119,7 @@ async function submit() {
 
   const encAccts = accts.filter((acct) => acct.enc);
 
-  const decAccts = await decryptAccts(encAccts, false);
+  const decAccts = await decryptAccts(encAccts);
 
   const newVault = await initializeVerifier(newPwd.value);
 

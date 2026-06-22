@@ -2,18 +2,18 @@ import { defineStore } from 'pinia';
 import { computed, reactive, ref, nextTick } from 'vue';
 import { db } from '@/firebase';
 import { collection, query, onSnapshot, addDoc, updateDoc, doc, getDocs, where, writeBatch } from 'firebase/firestore';
-import { useAccountStore } from './account';
+import { useDocumentStore } from './document';
 import { toast, alertDialog, confirmDialog } from '@/ui/dialogState.js';
 
-const BLANK_CATEGORY = { name: '', enc: false };
+const BLANK_DOCCATEGORY = { name: '', enc: false };
 
-export const useCategoryStore = defineStore('category', () => {
-  const accountStore = useAccountStore();
+export const useDocCategoryStore = defineStore('docCategory', () => {
+  const documentStore = useDocumentStore();
 
   const state = reactive({
     items: [],
     isLoaded: false,
-    selectedCategory: null, // The object currently being edited
+    selectedDocCategory: null, // The object currently being edited
     searchQuery: '',
     isSearchActive: false,
   });
@@ -28,7 +28,7 @@ export const useCategoryStore = defineStore('category', () => {
     state.isSearchActive = !state.isSearchActive;
   };
 
-  const unsubscribeCategories = ref(null);
+  const unsubscribeDocCategories = ref(null);
   let isInitialLoad = true;
   const isLoaded = computed(() => state.isLoaded);
   const searchQuery = computed({
@@ -38,18 +38,16 @@ export const useCategoryStore = defineStore('category', () => {
     },
   });
 
-  const numberOfFilteredCategories = computed(() => filteredCategories.value?.length || 0);
-
-  const filteredCategories = computed(() => {
+  const filteredDocCategories = computed(() => {
     const query = state.searchQuery ? state.searchQuery.toLowerCase().trim() : '';
-    if (!query || !accountStore.isLoaded || !Array.isArray(accountStore.state.items)) {
-      console.log('Empty query or accounts not loaded, returning all categories:', state.items.length);
+    if (!query || !documentStore.isLoaded || !Array.isArray(documentStore.state.items)) {
+      console.log('Empty query or accounts not loaded, returning all docCategories:', state.items.length);
       return state.items.slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
 
     const filtered = state.items.filter((cat) => {
-      const hasMatchingAccount = accountStore.state.items.some((account) => {
-        const matches = account.categoryId === cat.id && account.provider?.toLowerCase().includes(query);
+      const hasMatchingAccount = documentStore.state.items.some((account) => {
+        const matches = account.docCategoryId === cat.id && account.name?.toLowerCase().includes(query);
         return matches;
       });
       return hasMatchingAccount;
@@ -58,18 +56,18 @@ export const useCategoryStore = defineStore('category', () => {
     return filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   });
 
-  const subscribeToCategories = async () => {
-    if (unsubscribeCategories.value) {
-      console.log('Categories subscription already exists, skipping');
+  const subscribeToDocCategories = async () => {
+    if (unsubscribeDocCategories.value) {
+      console.log('docCategories subscription already exists, skipping');
       return;
     }
     if (state.isLoaded) {
-      console.log('Categories already loaded, skipping subscription');
+      console.log('docCategories already loaded, skipping subscription');
       return;
     }
     try {
-      console.log('Loading initial categories...');
-      const q = query(collection(db, 'categories'));
+      console.log('Loading initial docCategories...');
+      const q = query(collection(db, 'docCategories'));
       const snapshot = await getDocs(q);
       state.items = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -77,16 +75,16 @@ export const useCategoryStore = defineStore('category', () => {
       }));
       state.items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       state.isLoaded = true;
-      console.log('Initial categories loaded:', state.items.length);
+      console.log('Initial docCategories loaded:', state.items.length);
 
-      console.log('Subscribing to categories for real-time updates...');
-      unsubscribeCategories.value = onSnapshot(q, (snapshot) => {
+      console.log('Subscribing to docCategories for real-time updates...');
+      unsubscribeDocCategories.value = onSnapshot(q, (snapshot) => {
         if (isInitialLoad) {
           console.log('Skipping initial onSnapshot processing');
           isInitialLoad = false;
           return;
         }
-        console.log('Processing real-time category updates...');
+        console.log('Processing real-time docCategories updates...');
         const updates = [];
         snapshot.docChanges().forEach((change) => {
           const data = { id: change.doc.id, ...change.doc.data() };
@@ -109,63 +107,64 @@ export const useCategoryStore = defineStore('category', () => {
           }
         });
         state.items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-        console.log('Categories updated via subscription:', state.items.length);
+        console.log('docCategories updated via subscription:', state.items.length);
       });
     } catch (error) {
-      console.error('Error subscribing to categories:', error);
+      console.error('Error subscribing to docCategories:', error);
       state.isLoaded = false;
       throw error;
     }
   };
 
-  const unsubscribeFromCategories = () => {
-    if (unsubscribeCategories.value) {
-      console.log('Unsubscribing from categories...');
-      unsubscribeCategories.value();
-      unsubscribeCategories.value = null;
+  const unsubscribeFromDocCategories = () => {
+    if (unsubscribeDocCategories.value) {
+      console.log('Unsubscribing from docCategories...');
+      unsubscribeDocCategories.value();
+      unsubscribeDocCategories.value = null;
       state.isLoaded = false;
       state.items = [];
       isInitialLoad = true;
     }
   };
 
-  const categoryNameFor = (categoryId) => {
-    const category = state.items.find((cat) => cat.id === categoryId);
+  const docCategoryNameFor = (docCategoryId) => {
+    const category = state.items.find((cat) => cat.id === docCategoryId);
     return category ? category.name : 'N/A';
   };
 
-  const getCatEnc = (categoryId) => {
-    const category = state.items.find((cat) => cat.id === categoryId);
+  const getCatEnc = (docCategoryId) => {
+    const category = state.items.find((cat) => cat.id === docCategoryId);
     return category ? category.enc : false;
   };
 
-  const openCategoryDialog = (category = null) => {
-    state.selectedCategory = category ? category : { ...BLANK_CATEGORY };
+  const openDocCategoryDialog = (category = null) => {
+    state.selectedDocCategory = category ? category : { ...BLANK_DOCCATEGORY };
     dialog.value = true;
   };
 
-  const closeCategoryDialog = () => {
+  const closeDocCategoryDialog = () => {
     dialog.value = false;
-    state.selectedCategory = null;
+    state.selectedDocCategory = null;
   };
 
   // 3. Receive the cleaned data from the dialog
-  const saveCategory = async (categoryData) => {
+  const saveDocCategory = async (categoryData) => {
+    console.log('saveDocCat', saveDocCategory);
     const { id, name, enc } = categoryData;
     if (!name) return;
 
     if (id) {
-      await updateDoc(doc(db, 'categories', id), { name, enc });
+      await updateDoc(doc(db, 'docCategories', id), { name, enc });
     } else {
-      await addDoc(collection(db, 'categories'), { name, enc });
+      await addDoc(collection(db, 'docCategories'), { name, enc });
     }
-    closeCategoryDialog();
+    closeDocCategoryDialog();
   };
 
-  const deleteCategory = async (categoryId) => {
-    var catName = categoryNameFor(categoryId);
+  const deleteDocCategory = async (docCategoryId) => {
+    var catName = categoryNameFor(docCategoryId);
     const accountsRef = collection(db, 'accounts');
-    const q = query(accountsRef, where('categoryId', '==', categoryId));
+    const q = query(accountsRef, where('docCategoryId', '==', docCategoryId));
     const accts = await getDocs(q);
     if (accts.docs.length) {
       var msg = `This category is linked to ${accts.docs.length} accounts. Deleting it will also delete those accounts.  <br><br>Continue with deletion ?`;
@@ -176,7 +175,7 @@ export const useCategoryStore = defineStore('category', () => {
     const batch = writeBatch(db);
 
     try {
-      console.log(`Deleting all accounts for categoryId: ${categoryId}...`);
+      console.log(`Deleting all accounts for docCategoryId: ${docCategoryId}...`);
 
       // Add each account doc to batch delete
       accts.forEach((docSnap) => {
@@ -184,7 +183,7 @@ export const useCategoryStore = defineStore('category', () => {
       });
 
       // Delete the category document itself
-      const categoryRef = doc(db, 'categories', categoryId);
+      const categoryRef = doc(db, 'docCategories', docCategoryId);
       batch.delete(categoryRef);
 
       // Commit all deletions
@@ -203,16 +202,15 @@ export const useCategoryStore = defineStore('category', () => {
     isLoaded,
     dialog,
     searchQuery,
-    filteredCategories,
-    numberOfFilteredCategories,
+    filteredDocCategories,
     toggleSearch,
-    subscribeToCategories,
-    unsubscribeFromCategories,
-    saveCategory,
-    deleteCategory,
-    openCategoryDialog,
-    closeCategoryDialog,
-    categoryNameFor,
+    subscribeToDocCategories,
+    unsubscribeFromDocCategories,
+    saveDocCategory,
+    deleteDocCategory,
+    openDocCategoryDialog,
+    closeDocCategoryDialog,
+    docCategoryNameFor,
     getCatEnc,
   };
 });

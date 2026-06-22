@@ -79,8 +79,6 @@ async function encryptMessage(plaintext) {
 async function decryptMessage(ciphertextBase64) {
   if (!ciphertextBase64) return null;
 
-  console.log('decryptMessage', ciphertextBase64);
-
   const textDecoder = new TextDecoder();
   const base64ToBytes = (base64) => Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
   let key = getKey();

@@ -4,45 +4,41 @@ import { db } from '@/firebase';
 import { collection, query, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
 import { alertDialog } from '@/ui/dialogState.js';
 import { encryptMessage, decryptMessage } from '@/services/enc';
-import { encryptAccts, acctEncFlds } from '@/services/common';
+import { encryptAccts, docEncFlds } from '@/services/common';
 
 import { watch } from 'vue';
 
-export const useAccountStore = defineStore('account', () => {
+export const useDocumentStore = defineStore('document', () => {
   const state = reactive({
     items: [],
     isLoaded: false,
     formData: {
-      accountId: null,
-      provider: '',
-      accountNbr: null,
-      autoPay: false,
-      categoryId: null,
-      login: null,
-      loginUrl: null,
       notes: null,
-      password: null,
       pinNbr: null,
-      securityQA: null,
+      docNbr: null,
+      name: null,
+      provider: '',
+      docCategoryId: null,
       favorite: false,
       enc: false,
+      expiry: null,
     },
     searchQuery: '',
   });
 
   const dialog = ref(false);
-  const unsubscribeAccounts = ref(null);
+  const unsubscribeDocuments = ref(null);
   let isInitialLoad = true;
 
-  const _selectedCatId = ref('');
-  const selectedCatId = computed({
-    get: () => _selectedCatId.value,
+  const _selectedDocCatId = ref('');
+  const selectedDocCatId = computed({
+    get: () => _selectedDocCatId.value,
     set: (newId) => {
-      _selectedCatId.value = newId;
+      _selectedDocCatId.value = newId;
     },
   });
 
-  const selectedAllAccts = ref(false);
+  const selectedAllDocs = ref(false);
   const activeFilters = ref(['']);
 
   const isLoaded = computed(() => state.isLoaded);
@@ -54,39 +50,35 @@ export const useAccountStore = defineStore('account', () => {
     },
   });
 
-  const numberOfFilteredAccounts = computed(() => filteredAccounts?.value.length || 0);
-
-  // Modify filteredAccounts to consider selected filters
-  const filteredAccounts = computed(() => {
+  // Modify filteredDocuments to consider selected filters
+  const filteredDocuments = computed(() => {
     const filters = activeFilters.value;
-    const catId = selectedAllAccts.value ? '' : selectedCatId.value;
-    // const catId = selectedCatId;
+    const catId = selectedAllDocs.value ? '' : selectedDocCatId.value;
+    // const catId = selectedDocCatId;
     const query = state.searchQuery ? state.searchQuery.toLowerCase().trim() : '';
     let filtered = state.items || [];
 
     if (!state.isLoaded) return [];
 
-    // Filter by categoryId
+    // Filter by docCategoryId
     if (catId) {
-      filtered = filtered.filter((account) => (account.categoryId || '') === catId);
+      filtered = filtered.filter((account) => (account.docCategoryId || '') === catId);
     } else {
-      // console.log('Showing all accounts');
+      // console.log('Showing all documents');
     }
 
     // Filter by search query
     if (query) {
       filtered = filtered.filter((account) => account.provider?.toLowerCase().includes(query));
+      filtered = filtered.filter((account) => account.name?.toLowerCase().includes(query));
     }
 
     // Filter by activeFilters
     if (filters.includes('favorite')) {
       filtered = filtered.filter((acct) => acct.favorite);
     }
-    if (filters.includes('autoPay')) {
-      filtered = filtered.filter((acct) => acct.autoPay != null);
-    }
 
-    return filtered.sort((a, b) => (a.provider || '').localeCompare(b.provider || ''));
+    return filtered.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   });
 
   // Action to set filters
@@ -94,28 +86,28 @@ export const useAccountStore = defineStore('account', () => {
     activeFilters.value = [...filters]; // force array replacement
   };
 
-  const subscribeToAccounts = async () => {
-    if (unsubscribeAccounts.value) {
-      console.log('Accounts subscription already exists, skipping');
+  const subscribeToDocuments = async () => {
+    if (unsubscribeDocuments.value) {
+      console.log('Documents subscription already exists, skipping');
       return;
     }
     if (state.isLoaded) {
-      console.log('Accounts already loaded, skipping subscription');
+      console.log('Documents already loaded, skipping subscription');
       return;
     }
     try {
-      console.log('Loading initial accounts...');
-      const q = query(collection(db, 'accounts'));
+      console.log('Loading initial documents...');
+      const q = query(collection(db, 'documents'));
       const snapshot = await getDocs(q);
       state.items = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-      state.items.sort((a, b) => (a.provider || '').localeCompare(b.provider || ''));
+      state.items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       state.isLoaded = true;
 
-      console.log('Subscribing to accounts for real-time updates...');
-      unsubscribeAccounts.value = onSnapshot(q, (snapshot) => {
+      console.log('Subscribing to documents for real-time updates...');
+      unsubscribeDocuments.value = onSnapshot(q, (snapshot) => {
         if (isInitialLoad) {
           console.log('Skipping initial onSnapshot processing');
           isInitialLoad = false;
@@ -147,46 +139,46 @@ export const useAccountStore = defineStore('account', () => {
             // console.log("shapshot", "update", index, data);
           }
         });
-        state.items.sort((a, b) => (a.provider || '').localeCompare(b.provider || ''));
-        console.log('Accounts updated via subscription:', updates.length);
+        state.items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        console.log('Documents updated via subscription:', updates.length);
       });
     } catch (error) {
-      console.error('Error subscribing to accounts:', error);
-      alertDialog('Error subscribing to accounts', error);
+      console.error('Error subscribing to documents:', error);
+      alertDialog('Error subscribing to documents', error);
       state.isLoaded = false;
       throw error;
     }
   };
 
-  const unsubscribeFromAccounts = () => {
-    if (unsubscribeAccounts.value) {
-      console.log('Unsubscribing from accounts...');
-      unsubscribeAccounts.value();
-      unsubscribeAccounts.value = null;
+  const unsubscribeFromDocuments = () => {
+    if (unsubscribeDocuments.value) {
+      console.log('Unsubscribing from documents...');
+      unsubscribeDocuments.value();
+      unsubscribeDocuments.value = null;
       state.isLoaded = false;
       state.items = [];
       isInitialLoad = true;
     }
   };
 
-  const saveAccount = async (formData) => {
+  const saveDocument = async (formData) => {
     try {
       formData.lastChange = new Date().toDateString();
 
-      const { accountId, ...accountFields } = formData;
+      const { documentId, ...accountFields } = formData;
 
       const acct = buildEncryptedData(accountFields);
 
       const dbFields = (await encryptAccts([acct]))[0];
 
       let docRef;
-      if (accountId) {
+      if (documentId) {
         // It's an existing document, overwrite it cleanly using setDoc
-        docRef = doc(db, 'accounts', accountId);
+        docRef = doc(db, 'documents', documentId);
         await setDoc(docRef, dbFields);
       } else {
         // It's a brand new document
-        docRef = await addDoc(collection(db, 'accounts'), dbFields);
+        docRef = await addDoc(collection(db, 'documents'), dbFields);
       }
 
       return docRef.id;
@@ -203,7 +195,7 @@ export const useAccountStore = defineStore('account', () => {
 
     // 1. Sort fields into either the encrypted payload or the plaintext root
     Object.keys(acct).forEach((key) => {
-      if (acctEncFlds.includes(key)) {
+      if (docEncFlds.includes(key)) {
         if (acct[key] !== null && acct[key] !== undefined) {
           sensitivePayload[key] = acct[key];
         }
@@ -215,19 +207,19 @@ export const useAccountStore = defineStore('account', () => {
     return { ...plaintextRoot, encryptedData: JSON.stringify(sensitivePayload) };
   };
 
-  const deleteAccount = async (accountId) => {
+  const deleteDocument = async (documentId) => {
     try {
-      await deleteDoc(doc(db, 'accounts', accountId));
-      console.log('Account deleted:', accountId);
+      await deleteDoc(doc(db, 'documents', documentId));
+      console.log('Document deleted:', documentId);
     } catch (error) {
-      console.error('Error deleting account:', error);
-      alertDialog('Error deleting account', error);
+      console.error('Error deleting document:', error);
+      alertDialog('Error deleting document', error);
     }
   };
 
   const FAVORITE_STATES = [null, 'blue-darken-1', 'green-darken-3', 'yellow-darken-4'];
 
-  async function cycleFavorite(accountId, currentValue) {
+  async function cycleFavorite(documentId, currentValue) {
     // normalize old boolean values into the new state set
     const current =
       currentValue === true ? 'blue' : currentValue === false || currentValue == null ? null : currentValue;
@@ -235,7 +227,7 @@ export const useAccountStore = defineStore('account', () => {
     const idx = FAVORITE_STATES.indexOf(current);
     const next = FAVORITE_STATES[(idx + 1) % FAVORITE_STATES.length];
     const dateStamp = new Date().toDateString();
-    const accountRef = doc(db, 'accounts', accountId);
+    const accountRef = doc(db, 'documents', documentId);
     await updateDoc(accountRef, {
       favorite: next,
       lastChange: dateStamp,
@@ -243,25 +235,21 @@ export const useAccountStore = defineStore('account', () => {
   }
 
   // A clean factory function for a fresh, blank account
-  const createBlankAccount = (categoryId = null) => ({
-    accountId: null,
-    provider: '',
-    accountNbr: null,
-    autoPay: null,
-    categoryId: categoryId,
-    enc: false,
-    login: null,
-    loginUrl: null,
+  const createBlankDocument = (docCategoryId = null) => ({
     notes: null,
-    password: null,
     pinNbr: null,
-    securityQA: null,
+    docNbr: null,
+    name: null,
+    provider: '',
+    docCategoryId: docCategoryId,
     favorite: false,
+    enc: false,
+    expiry: null,
     lastChange: null,
   });
 
-  const openAccountDialog = async (account) => {
-    console.log('openAccountDialog account');
+  const openDocumentDialog = async (account) => {
+    console.log('openDocumentDialog account', account);
     dialog.value = true;
 
     const acct = JSON.parse(JSON.stringify(account));
@@ -270,7 +258,7 @@ export const useAccountStore = defineStore('account', () => {
       // 1. Clone the record and normalize the ID key for your form state
       const { id, encryptedData, ...plaintextRoot } = acct;
       const encData = encryptedData ? encryptedData : '{}';
-      const acctFormState = { ...plaintextRoot, accountId: id };
+      const acctFormState = { ...plaintextRoot, documentId: id };
 
       // 2. Decrypt the unified JSON string block if it exists
       if (encData) {
@@ -279,7 +267,6 @@ export const useAccountStore = defineStore('account', () => {
           const decryptedPayload = JSON.parse(decryptedJsonString);
 
           console.log('decryptedPayload', acct.enc, encData, decryptedJsonString, decryptedPayload);
-
           acct.enc = false;
 
           // Dynamically merge all decrypted fields directly into your form state
@@ -288,13 +275,13 @@ export const useAccountStore = defineStore('account', () => {
           console.error('Failed to decrypt unified acct payload:', e);
         }
       }
-
+      console.log('acctFormState', acctFormState);
       // Set enc to false so fields display and edit as clear text in the UI inputs
       acctFormState.enc = false;
       state.formData = acctFormState;
     } else {
       // 3. Initialize a clean state model for a brand new acct
-      state.formData = createBlankAccount(acct?.categoryId);
+      state.formData = createBlankDocument(acct?.docCategoryId);
     }
   };
 
@@ -307,19 +294,18 @@ export const useAccountStore = defineStore('account', () => {
     isLoaded,
     dialog,
     searchQuery,
-    filteredAccounts,
-    numberOfFilteredAccounts,
-    subscribeToAccounts,
-    unsubscribeFromAccounts,
-    saveAccount,
-    deleteAccount,
-    openAccountDialog,
+    filteredDocuments,
+    subscribeToDocuments,
+    unsubscribeFromDocuments,
+    saveDocument,
+    deleteDocument,
+    openDocumentDialog,
     closeAccountDialog,
     cycleFavorite,
     setFilters,
     buildEncryptedData,
     activeFilters,
-    selectedCatId,
-    selectedAllAccts,
+    selectedDocCatId,
+    selectedAllDocs,
   };
 });

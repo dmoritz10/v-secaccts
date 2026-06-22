@@ -1,18 +1,18 @@
 <template>
   <v-container fluid class="h-100 ma-0 pa-0 responsive-container">
-    <template v-if="accountStore.isLoaded && currentAccountIsLoaded">
+    <template v-if="documentStore.isLoaded && currentDocumentIsLoaded">
       <v-row class="position-sticky top-0 mx-0 px-0 mb-2 pb-2 grey lighten-4" style="z-index: 20">
         <v-col cols="12" class="pb-0 px-0">
           <v-sheet class="mx-3 px-4 pt-3 pb-3 mt-1 mb-0 border" elevation="0" rounded>
             <v-row class="align-center">
               <v-col cols="1">
-                <v-icon size="32" color="black" style="cursor: pointer" @click="returnToAccounts">
+                <v-icon size="32" color="black" style="cursor: pointer" @click="returnToDocuments">
                   mdi-chevron-left
                 </v-icon>
               </v-col>
               <v-col class="text-center">
                 <h2 class="subtitle-1 grey--text text-center">
-                  {{ currentAccount?.provider }}
+                  {{ currentDocument?.name }}
                 </h2>
               </v-col>
               <!-- Sandwich / 3-dot menu -->
@@ -29,33 +29,7 @@
                 <td class="text-green-darken-3 font-weight-bold">Category</td>
                 <td>
                   <h3>
-                    {{ categoryStore.categoryNameFor(currentAccount?.categoryId) }}
-                  </h3>
-                </td>
-                <td class="icon-cell">
-                  <v-icon
-                    size="small"
-                    icon="mdi-content-copy"
-                    @click="copyToClipboard(categoryNameFor(currentAccount?.categoryId) || 'N/A', 'Category')"></v-icon>
-                </td>
-              </tr>
-              <tr>
-                <td class="text-green-darken-3 font-weight-bold">Login</td>
-                <td>
-                  <h3>{{ currentAccount?.login }}</h3>
-                </td>
-                <td class="icon-cell">
-                  <v-icon
-                    size="small"
-                    icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.login || 'N/A', 'Login')"></v-icon>
-                </td>
-              </tr>
-              <tr>
-                <td class="text-green-darken-3 font-weight-bold">Password</td>
-                <td>
-                  <h3>
-                    {{ currentAccount?.password }}
+                    {{ docCategoryStore.categoryNameFor(currentDocument?.categoryId) }}
                   </h3>
                 </td>
                 <td class="icon-cell">
@@ -63,59 +37,87 @@
                     size="small"
                     icon="mdi-content-copy"
                     @click="
-                      copyToClipboard(showPassword ? currentAccount?.password || 'N/A' : '****', 'Password')
+                      copyToClipboard(categoryNameFor(currentDocument?.categoryId) || 'N/A', 'Category')
                     "></v-icon>
                 </td>
               </tr>
-              <tr v-if="currentAccount?.accountNbr">
-                <td class="text-green-darken-3 font-weight-bold">Account Number</td>
+              <tr>
+                <td class="text-green-darken-3 font-weight-bold">Login</td>
                 <td>
-                  <h3>{{ currentAccount?.accountNbr }}</h3>
+                  <h3>{{ currentDocument?.login }}</h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.accountNbr, 'Account Number')"></v-icon>
+                    @click="copyToClipboard(currentDocument?.login || 'N/A', 'Login')"></v-icon>
+                </td>
+              </tr>
+              <tr>
+                <td class="text-green-darken-3 font-weight-bold">Password</td>
+                <td>
+                  <h3>
+                    {{ currentDocument?.password }}
+                  </h3>
+                </td>
+                <td class="icon-cell">
+                  <v-icon
+                    size="small"
+                    icon="mdi-content-copy"
+                    @click="
+                      copyToClipboard(showPassword ? currentDocument?.password || 'N/A' : '****', 'Password')
+                    "></v-icon>
+                </td>
+              </tr>
+              <tr v-if="currentDocument?.accountNbr">
+                <td class="text-green-darken-3 font-weight-bold">Account Number</td>
+                <td>
+                  <h3>{{ currentDocument?.accountNbr }}</h3>
+                </td>
+                <td class="icon-cell">
+                  <v-icon
+                    size="small"
+                    icon="mdi-content-copy"
+                    @click="copyToClipboard(currentDocument?.accountNbr, 'Account Number')"></v-icon>
                 </td>
               </tr>
               <!-- <tr>
                 <td class="text-green-darken-3 font-weight-bold">Encrypted</td>
                 <td>
-                  <h3>{{ currentAccount?.enc ? 'Yes' : 'No' }}</h3>
+                  <h3>{{ currentDocument?.enc ? 'Yes' : 'No' }}</h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.enc ? 'Yes' : 'No', 'Encrypted')"></v-icon>
+                    @click="copyToClipboard(currentDocument?.enc ? 'Yes' : 'No', 'Encrypted')"></v-icon>
                 </td>
               </tr> -->
-              <tr v-if="currentAccount?.favorite">
+              <tr v-if="currentDocument?.favorite">
                 <td class="text-green-darken-3 font-weight-bold">Favorite</td>
                 <td>
-                  <h3>{{ currentAccount?.favorite ? 'Yes' : 'No' }}</h3>
+                  <h3>{{ currentDocument?.favorite ? 'Yes' : 'No' }}</h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.favorite ? 'Yes' : 'No', 'Favorite')"></v-icon>
+                    @click="copyToClipboard(currentDocument?.favorite ? 'Yes' : 'No', 'Favorite')"></v-icon>
                 </td>
               </tr>
-              <tr v-if="currentAccount?.loginUrl">
+              <tr v-if="currentDocument?.loginUrl">
                 <td class="text-green-darken-3 font-weight-bold">Login URL</td>
                 <td>
                   <a
-                    :href="currentAccount?.loginUrl"
+                    :href="currentDocument?.loginUrl"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="text-decoration-none text-primary">
                     <h3>
                       {{
-                        currentAccount?.loginUrl && currentAccount?.loginUrl.length > 30
-                          ? currentAccount?.loginUrl.slice(0, 25) + '...'
-                          : currentAccount?.loginUrl
+                        currentDocument?.loginUrl && currentDocument?.loginUrl.length > 30
+                          ? currentDocument?.loginUrl.slice(0, 25) + '...'
+                          : currentDocument?.loginUrl
                       }}
                     </h3>
                   </a>
@@ -126,72 +128,72 @@
                     icon="mdi-content-copy"
                     @click="
                       copyToClipboard(
-                        currentAccount?.loginUrl && currentAccount?.loginUrl.length > 30
-                          ? currentAccount?.loginUrl.slice(0, 30) + '...'
-                          : currentAccount?.loginUrl || 'N/A',
+                        currentDocument?.loginUrl && currentDocument?.loginUrl.length > 30
+                          ? currentDocument?.loginUrl.slice(0, 30) + '...'
+                          : currentDocument?.loginUrl || 'N/A',
                         'Login URL'
                       )
                     "></v-icon>
                 </td>
               </tr>
-              <tr v-if="currentAccount?.autoPay">
+              <tr v-if="currentDocument?.autoPay">
                 <td class="text-green-darken-3 font-weight-bold">Auto Pay</td>
                 <td>
-                  <h3>{{ currentAccount?.autoPay }}</h3>
+                  <h3>{{ currentDocument?.autoPay }}</h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.autoPay, 'Auto Pay')"></v-icon>
+                    @click="copyToClipboard(currentDocument?.autoPay, 'Auto Pay')"></v-icon>
                 </td>
               </tr>
-              <tr v-if="currentAccount?.pinNbr">
+              <tr v-if="currentDocument?.pinNbr">
                 <td class="text-green-darken-3 font-weight-bold">PIN Number</td>
                 <td>
-                  <h3>{{ currentAccount?.pinNbr }}</h3>
+                  <h3>{{ currentDocument?.pinNbr }}</h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.pinNbr, 'PIN Number')"></v-icon>
+                    @click="copyToClipboard(currentDocument?.pinNbr, 'PIN Number')"></v-icon>
                 </td>
               </tr>
-              <tr v-if="currentAccount?.securityQA">
+              <tr v-if="currentDocument?.securityQA">
                 <td class="text-green-darken-3 font-weight-bold">Security Q&A</td>
                 <td>
-                  <h3>{{ currentAccount?.securityQA }}</h3>
+                  <h3>{{ currentDocument?.securityQA }}</h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.securityQA, 'Security Q&A')"></v-icon>
+                    @click="copyToClipboard(currentDocument?.securityQA, 'Security Q&A')"></v-icon>
                 </td>
               </tr>
-              <tr v-if="currentAccount?.notes">
+              <tr v-if="currentDocument?.notes">
                 <td class="text-green-darken-3 font-weight-bold">Notes</td>
                 <td>
-                  <h3>{{ currentAccount?.notes }}</h3>
+                  <h3>{{ currentDocument?.notes }}</h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.notes, 'Notes')"></v-icon>
+                    @click="copyToClipboard(currentDocument?.notes, 'Notes')"></v-icon>
                 </td>
               </tr>
-              <tr v-if="currentAccount?.lastChange">
+              <tr v-if="currentDocument?.lastChange">
                 <td class="text-green-darken-3 font-weight-bold">Last Change</td>
                 <td>
-                  <h3>{{ currentAccount?.lastChange }}</h3>
+                  <h3>{{ currentDocument?.lastChange }}</h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.lastChange, 'Last Change')"></v-icon>
+                    @click="copyToClipboard(currentDocument?.lastChange, 'Last Change')"></v-icon>
                 </td>
               </tr>
             </tbody>
@@ -201,8 +203,8 @@
       <v-footer app class="justify-center pa-3 grey lighten-4">
         <v-btn-group class="rounded-2xl shadow-md bg-blue p-1" variant="tonal" color="primary" density="compact">
           <v-btn :disabled="!previousAccount" color="white" @click="navigateToAccount(previousAccount?.id)">Prev</v-btn>
-          <v-btn color="white" @click="openUpdateDialog(currentAccount)">
-            <!-- <v-btn color="primary" @click="openAccountDialog(currentAccount)" -->
+          <v-btn color="white" @click="openUpdateDialog(currentDocument)">
+            <!-- <v-btn color="primary" @click="openAccountDialog(currentDocument)" -->
             Update
           </v-btn>
           <v-btn :disabled="!nextAccount" color="white" @click="navigateToAccount(nextAccount?.id)">Next</v-btn>
@@ -211,11 +213,11 @@
 
       <!-- Update Dialog -->
       <!-- Account Dialog -->
-      <AccountDialog
-        v-model="accountStore.dialog"
-        :form-data="accountStore.state.formData"
+      <DocumentDialog
+        v-model="documentStore.dialog"
+        :form-data="documentStore.state.formData"
         @save="($event) => handleSave($event)"
-        @cancel="accountStore.closeAccountDialog" />
+        @cancel="documentStore.closeDocumentDialog" />
     </template>
   </v-container>
 </template>
@@ -225,7 +227,7 @@ import { computed, onMounted, watch, nextTick, ref, toRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAccountStore } from '@/stores/account';
 import { useCategoryStore } from '@/stores/category';
-import AccountDialog from '@/components/AccountDialog.vue';
+import DocumentDialog from '@/components/DocumentDialog.vue';
 
 import { decryptAcctReactive } from '@/services/common';
 import { until } from '@vueuse/core';
@@ -233,34 +235,34 @@ import { toast, alertDialog } from '@/ui/dialogState.js';
 
 const route = useRoute();
 const router = useRouter();
-const accountStore = useAccountStore();
-const categoryStore = useCategoryStore();
+const documentStore = useAccountStore();
+const docCategoryStore = useCategoryStore();
 
 const showPassword = ref(true); // Toggle for password visibility
 
-const currentAccountIsLoaded = ref(false);
+const currentDocumentIsLoaded = ref(false);
 
 // Compute the index reactively
-const idx = computed(() => accountStore.state.items.findIndex((acct) => acct.id === route.params.accountId));
+const idx = computed(() => documentStore.state.items.findIndex((acct) => acct.id === route.params.accountId));
 
 // One-way reactive computed ref
-const currentAccount = computed(() => {
-  const acct = accountStore.state.items[idx.value];
+const currentDocument = computed(() => {
+  const acct = documentStore.state.items[idx.value];
   const rtn = acct ? { ...acct } : null; // shallow clone breaks reference
   return rtn;
 });
 
 watch(
-  currentAccount,
+  currentDocument,
   async () => {
-    currentAccountIsLoaded.value = false;
-    await decryptAcctReactive(currentAccount.value);
-    currentAccountIsLoaded.value = true;
+    currentDocumentIsLoaded.value = false;
+    await decryptAcctReactive(currentDocument.value);
+    currentDocumentIsLoaded.value = true;
   },
   { immediate: true }
 );
 
-const filteredAccounts = computed(() => accountStore.filteredAccounts);
+const filteredAccounts = computed(() => documentStore.filteredAccounts);
 
 const currentIndex = computed(() => {
   const accountId = route.params.accountId;
@@ -282,31 +284,31 @@ const copyToClipboard = async (text, fieldName) => {
     await navigator.clipboard.writeText(text);
     toast('Copied to clipboard', 3000);
   } catch (error) {
-    console.error('ShowAccount.vue: Failed to copy to clipboard:', error);
-    alertDialog('ShowAccount.vue: Failed to copy to clipboard', error);
+    console.error('ShowDocument.vue: Failed to copy to clipboard:', error);
+    alertDialog('ShowDocument.vue: Failed to copy to clipboard', error);
   }
 };
 
 onMounted(async () => {
-  console.log('ShowAccount onMounted');
+  console.log('ShowDocument onMounted');
 
-  // Wait until currentAccount is defined
-  await until(() => accountStore.state.items.length > 0);
+  // Wait until currentDocument is defined
+  await until(() => documentStore.state.items.length > 0);
 
-  await decryptAcctReactive(currentAccount.value);
+  await decryptAcctReactive(currentDocument.value);
 
   // Now data is ready for template
-  currentAccountIsLoaded.value = true;
+  currentDocumentIsLoaded.value = true;
   console.log('onMount complete');
 });
 
-const returnToAccounts = () => {
+const returnToDocuments = () => {
   router.push({
-    path: '/accounts',
+    path: '/documents',
     query: {
-      id: currentAccount.value.categoryId,
-      name: categoryStore.categoryNameFor(currentAccount.value.categoryId),
-      scrollTo: currentAccount.value.id,
+      id: currentDocument.value.categoryId,
+      name: docCategoryStore.categoryNameFor(currentDocument.value.categoryId),
+      scrollTo: currentDocument.value.id,
       ts: Date.now(),
     },
   });
@@ -318,26 +320,26 @@ const navigateToAccount = (accountId) => {
 };
 
 const openUpdateDialog = (account) => {
-  accountStore.openAccountDialog(account);
+  documentStore.openAccountDialog(account);
 };
 
 const handleSave = async (formData) => {
   try {
-    await accountStore.saveAccount(formData);
+    await documentStore.saveAccount(formData);
     await nextTick();
-    accountStore.closeAccountDialog();
+    documentStore.closeDocumentDialog();
     router.push({
-      path: '/accounts',
+      path: '/documents',
       query: {
         id: formData.categoryId,
-        name: categoryStore.categoryNameFor(formData.categoryId),
+        name: docCategoryStore.categoryNameFor(formData.categoryId),
         scrollTo: formData.accountId,
         ts: Date.now(),
       },
     });
   } catch (error) {
-    console.error('ShowAccount.vue save account failed:', error);
-    alertDialog('ShowAccount.vue save account failed', error);
+    console.error('ShowDocument.vue save account failed:', error);
+    alertDialog('ShowDocument.vue save account failed', error);
   }
 };
 </script>

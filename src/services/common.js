@@ -14,10 +14,9 @@ import {
 import { toast, alertDialog, confirmDialog, blockScreen, unblockScreen } from '@/ui/dialogState.js';
 import { encryptMessage, decryptMessage } from '@/services/enc';
 import { useCategoryStore } from '@/stores/category';
-import Accounts from '@/views/Accounts.vue';
+import { useDocCategoryStore } from '@/stores/docCategory';
 
-export const acctEncFlds = ['accountNbr', 'autoPay', 'login', 'loginUrl', 'notes', 'password', 'pinNbr', 'securityQA'];
-
+export const acctEncFlds = ['accountNbr', 'login', 'loginUrl', 'notes', 'password', 'pinNbr', 'securityQA'];
 export const acctDBFlds = [
   'provider',
   'categoryId',
@@ -34,20 +33,19 @@ export const acctDBFlds = [
   'lastChange',
 ];
 
-async function getCats() {
-  //not used
-  const q = query(collection(db, 'categories'), orderBy('name', 'asc'));
-  const getCats = await getDocs(q);
-  const cats = getCats.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  return cats;
-}
-
-async function getAccts() {
-  // used
-  const getAccts = await getDocs(collection(db, 'accounts'));
-  const accts = getAccts.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  return accts;
-}
+export const docEncFlds = ['notes', 'docNbr', 'pinNbr'];
+export const docDBFlds = [
+  'notes',
+  'docNbr',
+  'pinNbr',
+  'name',
+  'provider',
+  'docCategoryId',
+  'enc',
+  'favorite',
+  'expiry',
+  'lastChange',
+];
 
 async function getUser(uid) {
   // used
@@ -107,15 +105,23 @@ async function updateOption(key, val) {
   }
 }
 
-async function encryptCat(cat) {
-  // used
-  console.log('encryptCat');
+async function encryptCat(cat, catType = 'accounts') {
+  console.log('encryptCat', catType);
 
   // blockScreen();
 
-  const ref = doc(db, 'categories', cat.id);
-  const col = collection(db, 'accounts');
-  const q = query(col, where('categoryId', '==', cat.id));
+  if (catType == 'accounts') {
+    var catCol = 'categories';
+    var acctCol = 'accounts';
+    var catIdField = 'categoryId';
+  } else {
+    var catCol = 'docCategories';
+    var acctCol = 'documents';
+    var catIdField = 'docCategoryId';
+  }
+
+  const col = collection(db, acctCol);
+  const q = query(col, where(catIdField, '==', cat.id));
   const getAccts = await getDocs(q);
   let accts = getAccts.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
@@ -123,31 +129,37 @@ async function encryptCat(cat) {
 
   if (!decAccts.length) {
     alertDialog('Encrypt Category', `Category ${cat.name} has no decrypted accounts`);
-    updateDoc(doc(db, 'categories', cat.id), { enc: true });
+    updateDoc(doc(db, catCol, cat.id), { enc: true });
     unblockScreen();
     return;
   }
 
   toast(`Encrypting ${cat.name}`, 5000);
 
-  await updateDoc(doc(db, 'categories', cat.id), { enc: true });
+  await updateDoc(doc(db, catCol, cat.id), { enc: true });
 
-  let encArr = await encryptAccts(decAccts);
+  let encArr = await encryptAccts(decAccts, catType);
 
-  console.log('encArr', encArr);
-
-  const bUpd = await updateAccts(encArr);
+  const bUpd = await updateAccts(encArr, catType);
 
   toast('Encryption complete', 0);
 
   unblockScreen();
-
-  console.timeEnd('encryptCat');
 }
 
-async function decryptCat(cat) {
-  // used
-  // console.time("decryptCat");
+async function decryptCat(cat, catType = 'accounts') {
+  console.log('decryptCat', catType);
+
+  if (catType == 'accounts') {
+    var catCol = 'categories';
+    var acctCol = 'accounts';
+    var catIdField = 'categoryId';
+  } else {
+    var catCol = 'docCategories';
+    var acctCol = 'documents';
+    var catIdField = 'docCategoryId';
+  }
+
   const confirmOK = await confirmDialog(
     "<strong class='text-red'>Warning !",
     'Decrypting sheet can expose passwords and other sensitive data to others with access to your account.<br><br>Do you wish to continue ?'
@@ -159,8 +171,8 @@ async function decryptCat(cat) {
   }
   blockScreen('Decryption underway');
 
-  const col = collection(db, 'accounts');
-  const q = query(col, where('categoryId', '==', cat.id));
+  const col = collection(db, acctCol);
+  const q = query(col, where(catIdField, '==', cat.id));
   const getAccts = await getDocs(q);
 
   let accts = getAccts.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -168,41 +180,40 @@ async function decryptCat(cat) {
   const encAccts = accts.filter((acct) => acct.enc);
   if (!encAccts.length) {
     alertDialog('Decrypt Category', `Category ${cat.name} has no encrypted accounts`);
-    updateDoc(doc(db, 'categories', cat.id), { enc: false });
+    updateDoc(doc(db, catCol, cat.id), { enc: false });
     unblockScreen();
     return;
   }
 
   toast(`Decrypting ${cat.name}`, 0);
 
-  let encArr = await decryptAccts(encAccts, false);
+  let encArr = await decryptAccts(encAccts, catType);
 
-  console.log('encArr', encArr);
+  const bUpd = await updateAccts(encArr, catType);
 
-  const bUpd = await updateAccts(encArr);
-
-  await updateDoc(doc(db, 'categories', cat.id), { enc: false });
+  await updateDoc(doc(db, catCol, cat.id), { enc: false });
 
   toast('Decryption complete', 0);
 
   unblockScreen();
-
-  console.log('decryptCat:', accts.length);
-  console.timeEnd('decryptCat');
 }
 
-async function encryptAccts(accts) {
-  const categoryStore = useCategoryStore();
-
-  console.time('encryptAccts');
+async function encryptAccts(accts, catType = 'accounts') {
+  console.log('encryptAccts', catType);
 
   try {
     // Process every account concurrently decrypted
     const encryptionPromises = accts.map(async (acct) => {
       const { encryptedData, ...plaintextRoot } = acct;
 
-      const catEnc = categoryStore.getCatEnc(acct.categoryId);
-      console.log('catEnc', catEnc);
+      let catEnc;
+      if (catType == 'accounts') {
+        const categoryStore = useCategoryStore();
+        catEnc = categoryStore.getCatEnc(acct.categoryId);
+      } else {
+        const docCategoryStore = useDocCategoryStore();
+        catEnc = docCategoryStore.getCatEnc(acct.docCategoryId);
+      }
 
       // 2. Encrypt the entire stringified payload at once (uses ONE combined IV)
       const encryptedString = catEnc ? await encryptMessage(encryptedData) : encryptedData;
@@ -218,7 +229,6 @@ async function encryptAccts(accts) {
     const result = await Promise.all(encryptionPromises);
 
     console.log('Migrated Accounts Count:', result.length);
-    console.timeEnd('encryptAccts');
 
     return result; // Ready to be bulk written back to Firestore!
   } catch (error) {
@@ -227,7 +237,7 @@ async function encryptAccts(accts) {
 }
 
 async function decryptAcctReactive(acct) {
-  console.log('decryptAcctReactive', acct, acct.encryptedData);
+  console.log('decryptAcctReactive');
   // If the account isn't encrypted or doesn't have our combined payload block, skip it
   if (!acct.encryptedData) return;
 
@@ -240,7 +250,6 @@ async function decryptAcctReactive(acct) {
     // 2. Reactively inject the decrypted fields directly into the existing object
     //    This preserves Vue's reactivity proxy!
     Object.keys(decryptedPayload).forEach((key) => {
-      console.log('keys', key, decryptedPayload[key]);
       acct[key] = decryptedPayload[key];
     });
 
@@ -252,8 +261,8 @@ async function decryptAcctReactive(acct) {
   }
 }
 
-async function decryptAccts(accts, parseEncryptedData = true) {
-  console.log('decryptAccts', accts);
+async function decryptAccts(accts) {
+  console.log('decryptAccts');
 
   // Process every account concurrently
   const decryptionPromises = accts.map(async (obj) => {
@@ -269,9 +278,6 @@ async function decryptAccts(accts, parseEncryptedData = true) {
     // 1. Decrypt the unified string block
     const decryptedJsonString = await decryptMessage(obj.encryptedData || '{}');
 
-    // 2. Parse it back into a temporary JavaScript object
-    const decryptedPayload = parseEncryptedData ? JSON.parse(decryptedJsonString) : decryptedJsonString;
-
     // 3. Destructure to pull 'encryptedData' out, leaving only plaintext root fields
     const { encryptedData, ...plaintextRoot } = obj;
     plaintextRoot.enc = false;
@@ -279,7 +285,7 @@ async function decryptAccts(accts, parseEncryptedData = true) {
     // 4. Combine root fields and decrypted payload into a flat object
     return {
       ...plaintextRoot,
-      encryptedData: decryptedPayload,
+      encryptedData: decryptedJsonString,
     };
   });
 
@@ -297,8 +303,8 @@ async function decryptAccts(accts, parseEncryptedData = true) {
   // }
 }
 
-async function updateAccts(accts) {
-  console.time('updateAccts');
+async function updateAccts(accts, catType = 'accounts') {
+  console.log('updateAccts', catType);
 
   const batch = writeBatch(db);
 
@@ -306,9 +312,7 @@ async function updateAccts(accts) {
     let acct = accts[i];
     const { id, ...acctNoId } = acct; // Removes 'id' and creates a new object
 
-    console.log('update', accts[i], acctNoId);
-
-    const docRef = doc(db, 'accounts', acct.id);
+    const docRef = doc(db, catType, acct.id);
     batch.set(docRef, acctNoId);
   }
 
@@ -316,7 +320,6 @@ async function updateAccts(accts) {
     .commit()
     .then((result) => {
       console.log('updateAccts: ', accts.length);
-      console.timeEnd('updateAccts');
       console.log('Batch update successful!');
 
       return result;
@@ -329,8 +332,6 @@ async function updateAccts(accts) {
 }
 
 export {
-  getCats,
-  getAccts,
   getUser,
   getOption,
   updateOption,

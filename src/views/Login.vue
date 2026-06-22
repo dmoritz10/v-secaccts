@@ -33,7 +33,7 @@
       <v-btn id="customGoogleBtn" color="primary" rounded large @click="signIn" class="google-btn">Sign in</v-btn>
     </v-row>
     <!-- Modal (v-dialog) -->
-    <v-dialog class="mt-16" v-model="dialogLogin" max-width="600">
+    <v-dialog class="mt-16" v-model="dialogLogin" max-width="600" transition="fade-transition">
       <v-card class="pa-5">
         <v-card-title class="text-h5">Sign in Verification</v-card-title>
         <v-form ref="form">
@@ -76,7 +76,6 @@ const dialogLogin = ref(false);
 const msg = ref('&nbsp;');
 
 onMounted(async () => {
-  console.log('Login.vue onMounted begin', authStore.currUser);
   // Clear auth store on mount to force Firestore re-authentication
   authStore.clearUser();
   msg.value = '&nbsp;';
@@ -93,12 +92,10 @@ onMounted(async () => {
         });
         greeting.value = `Hi ${user.displayName.split(' ')[0]}`;
         dialogLogin.value = true;
-        console.log('onAuthStateChanged', user, authStore);
       } else {
         // No Firebase user, clear store and keep dialog closed
         authStore.clearUser();
         dialogLogin.value = false;
-        console.log('onAuthStateChanged', 'no firebase user');
       }
       unsubscribe();
       resolve();
@@ -111,7 +108,7 @@ onMounted(async () => {
 });
 
 const signIn = async () => {
-  console.log('signIn', authStore);
+  console.log('signIn');
 
   try {
     const googleUser = await signInWithPopup(auth, provider);
@@ -136,7 +133,6 @@ const clearDialog = () => {
 };
 
 async function submit() {
-  console.log('submit', authStore);
   msg.value = '&nbsp;';
 
   // One-time routine to initialize the vault option
@@ -163,8 +159,6 @@ async function submit() {
 
   if (!userAuth) {
     msg.value = 'Invalid Login';
-    // authStore.clearUser();
-    console.log('1', authStore.currUser);
     clearKey();
     return;
   }
@@ -175,7 +169,6 @@ async function submit() {
 
   if (!key) {
     msg.value = 'Invalid Login';
-    console.log('2', authStore.currUser);
 
     // authStore.clearUser();
     clearKey();
