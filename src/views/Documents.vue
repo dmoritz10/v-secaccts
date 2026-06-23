@@ -65,7 +65,7 @@
           <v-col cols="12" class="pb-0">
             <v-text-field
               v-model="documentStore.searchQuery"
-              label="Search Providers"
+              label="Search Documents"
               prepend-inner-icon="mdi-magnify"
               clearable
               class="search-field border rounded"
@@ -204,8 +204,9 @@ watch(
 );
 
 const goToAccount = (account) => {
+  console.log('goToAccount  ', account, documentStore.selectedDocCatId);
   router.push({
-    path: `/documents/${account.id}`,
+    path: `/document/${account.id}`,
     query: {
       id: documentStore.selectedDocCatId,
       name: docCategoryStore.docCategoryNameFor(documentStore.selectedDocCatId),
@@ -262,7 +263,7 @@ const handleSave = async (formData) => {
   try {
     const acctId = await documentStore.saveDocument(formData);
     await nextTick();
-    documentStore.closeAccountDialog();
+    documentStore.closeDocumentDialog();
     router.push({
       path: '/documents',
       query: {

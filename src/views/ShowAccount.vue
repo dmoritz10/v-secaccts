@@ -194,6 +194,18 @@
                     @click="copyToClipboard(currentAccount?.lastChange, 'Last Change')"></v-icon>
                 </td>
               </tr>
+              <tr v-if="currentAccount?.dateAdd">
+                <td class="text-green-darken-3 font-weight-bold">Date Add</td>
+                <td>
+                  <h3>{{ currentAccount?.dateAdd }}</h3>
+                </td>
+                <td class="icon-cell">
+                  <v-icon
+                    size="small"
+                    icon="mdi-content-copy"
+                    @click="copyToClipboard(currentAccount?.dateAdd, 'Last Change')"></v-icon>
+                </td>
+              </tr>
             </tbody>
           </v-table>
         </v-card-text>

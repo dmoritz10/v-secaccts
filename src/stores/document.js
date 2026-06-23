@@ -178,6 +178,7 @@ export const useDocumentStore = defineStore('document', () => {
         await setDoc(docRef, dbFields);
       } else {
         // It's a brand new document
+        dbFields.dateAdd = new Date().toDateString();
         docRef = await addDoc(collection(db, 'documents'), dbFields);
       }
 
@@ -285,7 +286,7 @@ export const useDocumentStore = defineStore('document', () => {
     }
   };
 
-  const closeAccountDialog = () => {
+  const closeDocumentDialog = () => {
     dialog.value = false;
   };
 
@@ -300,7 +301,7 @@ export const useDocumentStore = defineStore('document', () => {
     saveDocument,
     deleteDocument,
     openDocumentDialog,
-    closeAccountDialog,
+    closeDocumentDialog,
     cycleFavorite,
     setFilters,
     buildEncryptedData,

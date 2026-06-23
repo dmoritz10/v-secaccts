@@ -41,7 +41,7 @@ export const useDocCategoryStore = defineStore('docCategory', () => {
   const filteredDocCategories = computed(() => {
     const query = state.searchQuery ? state.searchQuery.toLowerCase().trim() : '';
     if (!query || !documentStore.isLoaded || !Array.isArray(documentStore.state.items)) {
-      console.log('Empty query or accounts not loaded, returning all docCategories:', state.items.length);
+      console.log('Empty query or docuemts not loaded, returning all docCategories:', state.items.length);
       return state.items.slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
 
@@ -163,7 +163,7 @@ export const useDocCategoryStore = defineStore('docCategory', () => {
 
   const deleteDocCategory = async (docCategoryId) => {
     var catName = categoryNameFor(docCategoryId);
-    const accountsRef = collection(db, 'accounts');
+    const accountsRef = collection(db, 'documents');
     const q = query(accountsRef, where('docCategoryId', '==', docCategoryId));
     const accts = await getDocs(q);
     if (accts.docs.length) {

@@ -6,6 +6,7 @@ import NoteCategories from '@/views/NoteCategories.vue';
 import Accounts from '@/views/Accounts.vue';
 import Documents from '@/views/Documents.vue';
 import ShowAccount from '@/views/ShowAccount.vue';
+import ShowDocument from '@/views/ShowDocument.vue';
 import Login from '@/views/Login.vue';
 import { useAuthStore } from '@/stores/auth';
 import { getKey } from '@/services/keyVault';
@@ -17,6 +18,7 @@ const routes = [
   { path: '/account/:accountId', component: ShowAccount, meta: { requiresAuth: true, hideBottomNav: true } },
   { path: '/docCategories', component: DocCategories, meta: { requiresAuth: true } },
   { path: '/documents', component: Documents, meta: { requiresAuth: true, hideBottomNav: true } },
+  { path: '/document/:documentId', component: ShowDocument, meta: { requiresAuth: true, hideBottomNav: true } },
   { path: '/noteCategories', component: NoteCategories, meta: { requiresAuth: true } },
   { path: '/login', component: Login, meta: { hideBottomNav: true } },
   { path: '/:pathMatch(.*)*', redirect: '/' }, // catch-all — must be las

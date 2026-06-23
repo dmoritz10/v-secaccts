@@ -23,6 +23,13 @@
             required></v-text-field>
 
           <v-text-field v-model="formData.provider" label="Provider" variant="outlined" required></v-text-field>
+          <v-text-field
+            v-model="formData.expiry"
+            label="Expiration Date"
+            type="date"
+            variant="outlined"
+            required
+            density="compact"></v-text-field>
           <v-text-field v-model="formData.docNbr" label="Document Nbr" variant="outlined" clearable></v-text-field>
           <v-text-field v-model="formData.pinNbr" label="Pin Nbr" variant="outlined" clearable></v-text-field>
           <v-textarea v-model="formData.notes" label="Notes" variant="outlined" clearable></v-textarea>
@@ -43,6 +50,7 @@
 import { useDocCategoryStore } from '@/stores/docCategory';
 import { useDocumentStore } from '@/stores/document';
 import { ref, computed } from 'vue';
+import { dayjs } from '@/services/common';
 
 const docCategoryStore = useDocCategoryStore();
 const documentStore = useDocumentStore();

@@ -47,6 +47,34 @@ export const docDBFlds = [
   'lastChange',
 ];
 
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import isBetween from 'dayjs/plugin/isBetween';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+
+dayjs.extend(utc);
+dayjs.extend(relativeTime);
+dayjs.extend(isBetween);
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
+
+const getRecencyText = (dateVal) => {
+  if (!dateVal) return '';
+
+  const date = dayjs.utc(dateVal);
+  const now = dayjs.utc();
+  const diffInDays = now.diff(date, 'day');
+
+  // Custom overrides for that "Google" feel
+  if (diffInDays === 0) return 'Today';
+  if (diffInDays === 1) return 'Yesterday';
+
+  // .fromNow() handles "3 days ago", "last month", "2 years ago"
+  return date.fromNow();
+};
+
 async function getUser(uid) {
   // used
   try {
@@ -341,4 +369,5 @@ export {
   decryptAccts,
   updateAccts,
   decryptAcctReactive,
+  dayjs,
 };

@@ -186,6 +186,7 @@ export const useAccountStore = defineStore('account', () => {
         await setDoc(docRef, dbFields);
       } else {
         // It's a brand new document
+        dbFields.dateAdd = new Date().toDateString();
         docRef = await addDoc(collection(db, 'accounts'), dbFields);
       }
 

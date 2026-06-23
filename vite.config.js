@@ -1,50 +1,63 @@
-import { fileURLToPath, URL } from "node:url";
-import { defineConfig } from "vite";
-import vue from "@vitejs/plugin-vue";
-import vueDevTools from "vite-plugin-vue-devtools";
-import { VitePWA } from "vite-plugin-pwa";
+import { fileURLToPath, URL } from 'node:url';
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import vueDevTools from 'vite-plugin-vue-devtools';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  optimizeDeps: {
+    include: [
+      'vuetify',
+      'vuetify/components',
+      'vuetify/directives',
+      'dayjs',
+      'dayjs/plugin/utc',
+      'dayjs/plugin/relativeTime',
+      'dayjs/plugin/isBetween',
+      'dayjs/plugin/isSameOrAfter',
+      'dayjs/plugin/isSameOrBefore',
+    ],
+  },
   plugins: [
     vue(),
     vueDevTools(),
-    VitePWA({   
-      registerType: "autoUpdate", // Automatically update service worker
+    VitePWA({
+      registerType: 'autoUpdate', // Automatically update service worker
       devOptions: {
         enabled: false, // Enable PWA in development
       },
-      includeAssets: ["/secure144x144.png", "/secure512x512.png"],
+      includeAssets: ['/secure144x144.png', '/secure512x512.png'],
       manifest: {
-        id: "/v-secaccts",
-        name: "Accounts Companion",
-        short_name: "Accounts Companion",
-        description: "",
-        theme_color: "#ffffff",
-        background_color: "#ffffff",
-        orientation: "portrait-primary",
-        start_url: "/",
-        display: "standalone",
+        id: '/v-secaccts',
+        name: 'Accounts Companion',
+        short_name: 'Accounts Companion',
+        description: '',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
+        orientation: 'portrait-primary',
+        start_url: '/',
+        display: 'standalone',
         icons: [
           {
-            src: "/secure144x144.png",
-            sizes: "144x144",
-            type: "image/png",
+            src: '/secure144x144.png',
+            sizes: '144x144',
+            type: 'image/png',
           },
           {
-            src: "/secure512x512.png",
-            sizes: "512x512",
-            type: "image/png",
+            src: '/secure512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
           },
         ],
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,svg}"],
+        globPatterns: ['**/*.{js,css,html,ico,svg}'],
         runtimeCaching: [
           {
-            urlPattern: ({ request }) => request.destination === "image",
-            handler: "CacheFirst",
+            urlPattern: ({ request }) => request.destination === 'image',
+            handler: 'CacheFirst',
             options: {
-              cacheName: "images",
+              cacheName: 'images',
               expiration: {
                 maxEntries: 10,
                 maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
@@ -53,7 +66,7 @@ export default defineConfig({
           },
           {
             urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
-            handler: "NetworkOnly", // Firestore requires network
+            handler: 'NetworkOnly', // Firestore requires network
           },
         ],
       },
@@ -61,8 +74,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  base: "/", // Required for Firebase Hosting
+  base: '/', // Required for Firebase Hosting
 });

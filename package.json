@@ -1,6 +1,6 @@
 {
   "name": "v-secaccts",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,6 +14,7 @@
   "dependencies": {
     "@vueuse/core": "^13.6.0",
     "date-fns": "^4.1.0",
+    "dayjs": "^1.11.21",
     "firebase": "^11.9.1",
     "marked": "^16.4.0",
     "pinia": "^3.0.3",
