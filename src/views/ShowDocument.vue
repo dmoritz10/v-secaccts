@@ -56,7 +56,7 @@
               </tr>
 
               <tr v-if="currentDocument?.docNbr">
-                <td class="text-green-darken-3 font-weight-bold">Document Nbr</td>
+                <td class="text-green-darken-3 font-weight-bold">Doc Nbr</td>
                 <td>
                   <h3>{{ currentDocument?.docNbr }}</h3>
                 </td>
@@ -64,11 +64,11 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentDocument?.docNbr, 'Auto Pay')"></v-icon>
+                    @click="copyToClipboard(currentDocument?.docNbr, 'Doc Nbr')"></v-icon>
                 </td>
               </tr>
               <tr v-if="currentDocument?.pinNbr">
-                <td class="text-green-darken-3 font-weight-bold">PIN Number</td>
+                <td class="text-green-darken-3 font-weight-bold">Pin Nbr</td>
                 <td>
                   <h3>{{ currentDocument?.pinNbr }}</h3>
                 </td>
@@ -76,7 +76,7 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentDocument?.pinNbr, 'PIN Number')"></v-icon>
+                    @click="copyToClipboard(currentDocument?.pinNbr, 'Pin Nbr')"></v-icon>
                 </td>
               </tr>
               <tr v-if="currentDocument?.expiry">
