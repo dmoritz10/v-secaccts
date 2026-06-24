@@ -114,26 +114,27 @@ async function submit() {
 
   blockScreen();
 
+  // decrypt accounts and documents
   const getAccts = await getDocs(collection(db, 'accounts'));
   let accts = getAccts.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
   const encAccts = accts.filter((acct) => acct.enc);
-
   const decAccts = await decryptAccts(encAccts);
 
+  const docsSnapshot = await getDocs(collection(db, 'documents'));
+  let docs = docsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  const encDocs = docs.filter((acct) => acct.enc);
+  const decDocs = await decryptAccts(encDocs);
+
+  // calculate new key from new pwd
   const newVault = await initializeVerifier(newPwd.value);
-
   const { salt } = newVault;
-
   const newKey = await deriveKey(newPwd.value, salt);
-
   newPwd.value = null;
-
   setKey(newKey);
 
   const reEncAccts = await encryptAccts(decAccts);
-
-  const bUpd = await updateAccts(reEncAccts);
+  const reEncDocs = await encryptAccts(decDocs);
+  const bUpd = await updateAccts(...reEncAccts, ...reEncDocs);
 
   unblockScreen();
 
