@@ -146,7 +146,7 @@
       v-model="documentStore.dialog"
       :form-data="documentStore.state.formData"
       @save="($event) => handleSave($event)"
-      @cancel="documentStore.closeAccountDialog" />
+      @cancel="documentStore.closeDocumentDialog" />
   </v-container>
 </template>
 

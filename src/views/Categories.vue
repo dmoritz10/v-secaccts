@@ -24,9 +24,6 @@
                     </template>
 
                     <v-list>
-                      <v-list-item v-if="authStore.currUser.admin" @click="openChangePasswordDialog">
-                        <v-list-item-title>Change password</v-list-item-title>
-                      </v-list-item>
                       <v-list-item @click="goToAllAccounts">
                         <v-list-item-title>Show all Accounts</v-list-item-title>
                       </v-list-item>
@@ -86,13 +83,7 @@
                 {{ category.name }}
               </v-card-title>
               <v-spacer></v-spacer>
-              <v-btn
-                flat
-                outlined
-                :class="['crypt-btn', 'close-btn', category.enc ? 'bg-red-lighten-2' : 'bg-green-lighten-2']"
-                @click.stop="cryptCat(category)">
-                {{ category.enc ? 'decrypt' : 'encrypt' }}
-              </v-btn>
+
               <v-btn
                 icon
                 small
@@ -137,11 +128,6 @@
       :category="categoryStore.state.selectedCategory"
       @save="categoryStore.saveCategory"
       @cancel="categoryStore.closeCategoryDialog" />
-
-    <template>
-      <v-btn @click="openChangePasswordDialog">Change Password</v-btn>
-      <PasswordChangeDialog ref="pwdDialog" />
-    </template>
   </v-container>
 </template>
 
@@ -154,9 +140,7 @@ import { useAuthStore } from '@/stores/auth';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import CategoryDialog from '@/components/CategoryDialog.vue';
-import PasswordChangeDialog from '@/components/PasswordChangeDialog.vue';
 import { alertDialog } from '@/ui/dialogState.js';
-import { encryptCat, decryptCat } from '@/services/common';
 import { clearKey } from '@/services/keyVault';
 import { marked } from 'marked';
 import { getStorage } from 'firebase/storage';
@@ -261,12 +245,6 @@ const handleSignOut = async () => {
     clearKey();
     router.replace('/');
   }
-};
-
-const cryptCat = async (cat) => {
-  if (cat.enc) {
-    await decryptCat(cat);
-  } else await encryptCat(cat);
 };
 
 const about = async () => {

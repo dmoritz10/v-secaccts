@@ -79,18 +79,7 @@
                     @click="copyToClipboard(currentAccount?.accountNbr, 'Account Number')"></v-icon>
                 </td>
               </tr>
-              <!-- <tr>
-                <td class="text-green-darken-3 font-weight-bold">Encrypted</td>
-                <td>
-                  <h3>{{ currentAccount?.enc ? 'Yes' : 'No' }}</h3>
-                </td>
-                <td class="icon-cell">
-                  <v-icon
-                    size="small"
-                    icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.enc ? 'Yes' : 'No', 'Encrypted')"></v-icon>
-                </td>
-              </tr> -->
+
               <tr v-if="currentAccount?.favorite">
                 <td class="text-green-darken-3 font-weight-bold">Favorite</td>
                 <td>

@@ -25,7 +25,6 @@ export const useAccountStore = defineStore('account', () => {
       pinNbr: null,
       securityQA: null,
       favorite: false,
-      enc: false,
     },
     searchQuery: '',
   });
@@ -250,7 +249,6 @@ export const useAccountStore = defineStore('account', () => {
     accountNbr: null,
     autoPay: null,
     categoryId: categoryId,
-    enc: false,
     login: null,
     loginUrl: null,
     notes: null,
@@ -268,33 +266,24 @@ export const useAccountStore = defineStore('account', () => {
     const acct = JSON.parse(JSON.stringify(account));
 
     if (acct?.id) {
-      // 1. Clone the record and normalize the ID key for your form state
       const { id, encryptedData, ...plaintextRoot } = acct;
-      const encData = encryptedData ? encryptedData : '{}';
       const acctFormState = { ...plaintextRoot, accountId: id };
 
-      // 2. Decrypt the unified JSON string block if it exists
-      if (encData) {
+      if (encryptedData) {
+        // Coming from Document.vue (list view) — still encrypted, decrypt now
         try {
-          const decryptedJsonString = acct.enc && encData ? await decryptMessage(encData) : encData;
+          const decryptedJsonString = await decryptMessage(encryptedData);
           const decryptedPayload = JSON.parse(decryptedJsonString);
-
-          console.log('decryptedPayload', acct.enc, encData, decryptedJsonString, decryptedPayload);
-
-          acct.enc = false;
-
-          // Dynamically merge all decrypted fields directly into your form state
           Object.assign(acctFormState, decryptedPayload);
         } catch (e) {
           console.error('Failed to decrypt unified acct payload:', e);
         }
       }
+      // else: already decrypted reactively (coming from ShowDocument.vue) —
+      // plaintextRoot already has the real fields merged in, nothing to do
 
-      // Set enc to false so fields display and edit as clear text in the UI inputs
-      acctFormState.enc = false;
       state.formData = acctFormState;
     } else {
-      // 3. Initialize a clean state model for a brand new acct
       state.formData = createBlankAccount(acct?.categoryId);
     }
   };

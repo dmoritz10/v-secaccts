@@ -4,12 +4,27 @@
       <v-card-title class="text-h6">Change Password</v-card-title>
 
       <v-card-text>
-        <v-text-field v-model="currentPwd" label="Current Password" type="password" variant="outlined" />
-        <v-text-field v-model="newPwd" label="New Password" type="password" variant="outlined" />
+        <v-text-field
+          v-model="currentPwd"
+          label="Current Password"
+          :type="showCurrentPwd ? 'text' : 'password'"
+          :append-inner-icon="showCurrentPwd ? 'mdi-eye-off' : 'mdi-eye'"
+          @click:append-inner="showCurrentPwd = !showCurrentPwd"
+          variant="outlined" />
+
+        <v-text-field
+          v-model="newPwd"
+          label="New Password"
+          :type="showNewPwd ? 'text' : 'password'"
+          :append-inner-icon="showNewPwd ? 'mdi-eye-off' : 'mdi-eye'"
+          @click:append-inner="showNewPwd = !showNewPwd"
+          variant="outlined" />
         <v-text-field
           v-model="confirmPwd"
           label="Confirm New Password"
-          type="password"
+          :type="showConfirmPwd ? 'text' : 'password'"
+          :append-inner-icon="showConfirmPwd ? 'mdi-eye-off' : 'mdi-eye'"
+          @click:append-inner="showConfirmPwd = !showConfirmPwd"
           variant="outlined"
           :error="confirmError"
           :error-messages="confirmErrorMsg"
@@ -27,16 +42,15 @@
 
 <script setup>
 import { ref, computed } from 'vue';
-import { getOption, updateAccts } from '@/services/common';
+import { getOption } from '@/services/common';
 
-import { collection, doc, query, getDocs, where, updateDoc, writeBatch, orderBy } from 'firebase/firestore';
+import { collection, doc, query, getDocs, where, writeBatch } from 'firebase/firestore';
 import { toast, alertDialog, blockScreen, unblockScreen } from '@/ui/dialogState.js';
 import { db } from '@/firebase';
 
-import { encryptAccts, decryptAccts, acctDBFlds } from '@/services/common';
-import { verifyPassword, initializeVerifier, deriveKey } from '@/services/enc';
-import { setKey, clearKey } from '@/services/keyVault';
-import { useAccountStore } from '@/stores/account';
+import { encryptAccts, decryptAccts } from '@/services/common';
+import { verifyPassword, buildVerifierData } from '@/services/enc';
+import { setKey, getKey, clearKey } from '@/services/keyVault';
 
 const strongRegex = new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,})');
 const invalidPwdMsg = `Passwords must contain at least
@@ -47,13 +61,14 @@ const invalidPwdMsg = `Passwords must contain at least
     8 characters
     `;
 
-const accountStore = useAccountStore();
-
 const show = ref(false);
 const currentPwd = ref('');
 const newPwd = ref('');
 const confirmPwd = ref('');
 const confirmTouched = ref(false);
+const showConfirmPwd = ref(false);
+const showCurrentPwd = ref(false);
+const showNewPwd = ref(false);
 
 const confirmErrorMsg = computed(() => {
   if (!confirmTouched.value) return '';
@@ -79,14 +94,53 @@ function open() {
   newPwd.value = '';
   confirmPwd.value = '';
   confirmTouched.value = false;
+  showCurrentPwd.value = false;
+  showNewPwd.value = false;
+  showConfirmPwd.value = false;
   show.value = true;
 }
 
 // Cancel
 function cancel() {
+  currentPwd.value = '';
+  newPwd.value = '';
+  confirmPwd.value = '';
+  confirmTouched.value = false;
+  showCurrentPwd.value = false;
+  showNewPwd.value = false;
+  showConfirmPwd.value = false;
   show.value = false;
-  currentPwd.value = null;
-  newPwd.value = null;
+}
+
+async function getVaultDocRef() {
+  const options = collection(db, 'options');
+  const q = query(options, where('key', '==', 'vault'));
+  const querySnapshot = await getDocs(q);
+
+  if (querySnapshot.empty) {
+    return doc(collection(db, 'options')); // pre-allocate a new ref, no write yet
+  }
+  return doc(db, 'options', querySnapshot.docs[0].id);
+}
+
+async function commitPasswordChange(verifierData, reEncAccts, reEncDocs) {
+  const batch = writeBatch(db);
+
+  const vaultRef = await getVaultDocRef();
+  const { key, ...vaultPayload } = verifierData; // strip non-serializable CryptoKey
+  batch.set(vaultRef, { key: 'vault', value: vaultPayload });
+
+  for (const acct of reEncAccts) {
+    const { id, ...rest } = acct;
+    batch.set(doc(db, 'accounts', id), rest);
+  }
+
+  for (const docItem of reEncDocs) {
+    const { id, ...rest } = docItem;
+    batch.set(doc(db, 'documents', id), rest);
+  }
+
+  return batch.commit();
 }
 
 async function submit() {
@@ -102,43 +156,51 @@ async function submit() {
 
   show.value = false;
 
-  var currKey = await verifyPassword(currentPwd.value, vault);
-
+  const currKey = await verifyPassword(currentPwd.value, vault);
   currentPwd.value = null;
 
   if (!currKey) {
     newPwd.value = null;
     alertDialog('Change Password', 'Invalid password');
-    return null;
+    return;
   }
 
   blockScreen();
 
-  // decrypt accounts and documents
-  const getAccts = await getDocs(collection(db, 'accounts'));
-  let accts = getAccts.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  const encAccts = accts.filter((acct) => acct.enc);
-  const decAccts = await decryptAccts(encAccts);
+  const oldKey = getKey(); // snapshot for rollback if anything fails below
 
-  const docsSnapshot = await getDocs(collection(db, 'documents'));
-  let docs = docsSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-  const encDocs = docs.filter((acct) => acct.enc);
-  const decDocs = await decryptAccts(encDocs);
+  try {
+    // Decrypt everything with the OLD key, still active at this point
+    const acctsSnapshot = await getDocs(collection(db, 'accounts'));
+    const accts = acctsSnapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const decAccts = await decryptAccts(accts);
 
-  // calculate new key from new pwd
-  const newVault = await initializeVerifier(newPwd.value);
-  const { salt } = newVault;
-  const newKey = await deriveKey(newPwd.value, salt);
-  newPwd.value = null;
-  setKey(newKey);
+    const docsSnapshot = await getDocs(collection(db, 'documents'));
+    const docs = docsSnapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const decDocs = await decryptAccts(docs);
 
-  const reEncAccts = await encryptAccts(decAccts);
-  const reEncDocs = await encryptAccts(decDocs);
-  const bUpd = await updateAccts(...reEncAccts, ...reEncDocs);
+    // Build new verifier + key, no DB write yet
+    const verifierData = await buildVerifierData(newPwd.value);
+    newPwd.value = null;
+    const newKey = verifierData.key;
 
-  unblockScreen();
+    // Activate the new key now, since encryptMessage() reads getKey() internally
+    setKey(newKey);
 
-  toast('Change of password is complete', 3000);
+    const reEncAccts = await encryptAccts(decAccts);
+    const reEncDocs = await encryptAccts(decDocs);
+
+    // Single atomic commit: vault + accounts + documents together
+    await commitPasswordChange(verifierData, reEncAccts, reEncDocs);
+
+    toast('Change of password is complete', 3000);
+  } catch (error) {
+    console.error('Password change failed:', error);
+    setKey(oldKey); // roll back — old password/key remains valid
+    alertDialog('Change Password', 'Failed to update password — your old password is still active.');
+  } finally {
+    unblockScreen();
+  }
 }
 
 defineExpose({ open });

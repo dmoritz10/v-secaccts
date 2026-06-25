@@ -25,40 +25,30 @@ async function deriveKey(password, saltBase64) {
   return key;
 }
 
-async function initializeVerifier(password) {
-  // 1️⃣ Generate a fresh random salt
-
+async function buildVerifierData(password) {
   const textEncoder = new TextEncoder();
   const bytesToBase64 = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes)));
 
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const saltBase64 = bytesToBase64(salt);
 
-  // 2️⃣ Derive a key from password + salt
   const key = await deriveKey(password, saltBase64);
 
-  // 3️⃣ Create a random verifier string
   const verifierString = crypto
     .getRandomValues(new Uint8Array(16))
     .reduce((s, b) => s + b.toString(16).padStart(2, '0'), '');
 
-  // 4️⃣ Encrypt that verifier string
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, textEncoder.encode(verifierString));
 
-  // 5️⃣ Prepare object for Firebase storage
-  const verifierData = {
+  return {
     salt: saltBase64,
     verifier: {
       iv: bytesToBase64(iv),
       data: bytesToBase64(encrypted),
-      //    expectedValue: verifierString, // keep this only during setup
     },
+    key, // exposed so callers don't have to re-derive it
   };
-
-  updateOption('vault', verifierData);
-
-  return verifierData;
 }
 
 async function encryptMessage(plaintext) {
@@ -91,6 +81,33 @@ async function decryptMessage(ciphertextBase64) {
   return textDecoder.decode(decrypted);
 }
 
+async function encryptBlob(blob) {
+  const key = getKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const plainBuffer = await blob.arrayBuffer();
+
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plainBuffer);
+
+  // Prepend IV to ciphertext, store as one blob
+  const combined = new Uint8Array(iv.length + encrypted.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(encrypted), iv.length);
+
+  return new Blob([combined], { type: 'application/octet-stream' });
+}
+
+async function decryptBlob(encryptedBlob, originalMimeType) {
+  const key = getKey();
+  const buffer = await encryptedBlob.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+
+  const iv = bytes.slice(0, 12);
+  const ciphertext = bytes.slice(12);
+
+  const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+  return new Blob([decrypted], { type: originalMimeType });
+}
+
 /* ----------------------------------------
    4️⃣ Verify password and return key
 ---------------------------------------- */
@@ -120,4 +137,4 @@ async function verifyPassword(password, stored) {
     return null;
   }
 }
-export { encryptMessage, decryptMessage, initializeVerifier, verifyPassword, deriveKey };
+export { encryptMessage, decryptMessage, buildVerifierData, verifyPassword, deriveKey, encryptBlob, decryptBlob };

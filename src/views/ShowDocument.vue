@@ -255,6 +255,7 @@ const navigateToDocument = (accountId) => {
 };
 
 const openUpdateDialog = (account) => {
+  console.log('openUpdateDialog', account);
   documentStore.openDocumentDialog(account);
 };
 

@@ -39,7 +39,18 @@
         <v-form ref="form">
           <!-- <v-text-field v-model="usr" label="User" required></v-text-field> -->
           <v-card-text>{{ greeting }}</v-card-text>
-          <v-text-field type="password" v-model="pwd" ref="pwdFocus" label="Password" required></v-text-field>
+
+          <v-text-field
+            v-model="pwd"
+            label="Password"
+            :type="showCurrentPwd ? 'text' : 'password'"
+            :append-inner-icon="showCurrentPwd ? 'mdi-eye-off' : 'mdi-eye'"
+            ref="pwdFocus"
+            @click:append-inner="showCurrentPwd = !showCurrentPwd"
+            required
+            variant="outlined" />
+
+          <!-- <v-text-field type="password" v-model="pwd" ref="pwdFocus" label="Password" required></v-text-field> -->
           <v-card-text>
             <div v-html="msg"></div>
           </v-card-text>
@@ -62,7 +73,7 @@ import { auth, provider } from '@/firebase';
 import { signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
 import { getOption, getUser } from '../services/common';
 import { alertDialog } from '@/ui/dialogState.js';
-import { initializeVerifier, verifyPassword } from '../services/enc.js';
+import { verifyPassword } from '../services/enc.js';
 import { setKey, clearKey } from '@/services/keyVault';
 import { restoreAllSheets } from '@/services/restoreDB';
 
@@ -71,6 +82,8 @@ const authStore = useAuthStore();
 const greeting = ref('Welcome');
 
 const pwd = ref('');
+const showCurrentPwd = ref(false);
+
 const pwdFocus = ref(null);
 const dialogLogin = ref(false);
 const msg = ref('&nbsp;');
@@ -129,6 +142,7 @@ const clearDialog = () => {
   dialogLogin.value = false;
   msg.value = '&nbsp;';
   pwd.value = '';
+  showCurrentPwd.value = false;
   authStore.clearUser();
 };
 
@@ -162,10 +176,11 @@ async function submit() {
     clearKey();
     return;
   }
-  pwd.value = 'Star123#';
+  // pwd.value = 'Stars123#';
   var key = await verifyPassword(pwd.value, vault);
 
   pwd.value = null;
+  showCurrentPwd.value = false;
 
   if (!key) {
     msg.value = 'Invalid Login';

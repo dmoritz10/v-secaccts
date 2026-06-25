@@ -70,3 +70,34 @@ service cloud.firestore {
     }
   }
 }
+
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isWhitelistedEmail() {
+      return isSignedIn() &&
+             request.auth.token.email in [
+               "dmoritz10@gmail.com",
+               "christinamoritz@gmail.com"
+             ];
+    }
+
+    function isRegisteredUser() {
+      return isSignedIn() &&
+             firestore.exists(/databases/(default)/documents/users/$(request.auth.uid));
+    }
+
+    function isFullyAuthorized() {
+      return isWhitelistedEmail() && isRegisteredUser();
+    }
+
+    match /documents/{allPaths=**} {
+      allow read, write: if isFullyAuthorized();
+    }
+  }
+}

@@ -5,7 +5,7 @@ import { collection, query, onSnapshot, addDoc, updateDoc, doc, getDocs, where, 
 import { useAccountStore } from './account';
 import { toast, alertDialog, confirmDialog } from '@/ui/dialogState.js';
 
-const BLANK_CATEGORY = { name: '', enc: false };
+const BLANK_CATEGORY = { name: '' };
 
 export const useCategoryStore = defineStore('category', () => {
   const accountStore = useAccountStore();
@@ -134,11 +134,6 @@ export const useCategoryStore = defineStore('category', () => {
     return category ? category.name : 'N/A';
   };
 
-  const getCatEnc = (categoryId) => {
-    const category = state.items.find((cat) => cat.id === categoryId);
-    return category ? category.enc : false;
-  };
-
   const openCategoryDialog = (category = null) => {
     state.selectedCategory = category ? category : { ...BLANK_CATEGORY };
     dialog.value = true;
@@ -151,13 +146,13 @@ export const useCategoryStore = defineStore('category', () => {
 
   // 3. Receive the cleaned data from the dialog
   const saveCategory = async (categoryData) => {
-    const { id, name, enc } = categoryData;
+    const { id, name } = categoryData;
     if (!name) return;
 
     if (id) {
-      await updateDoc(doc(db, 'categories', id), { name, enc });
+      await updateDoc(doc(db, 'categories', id), { name });
     } else {
-      await addDoc(collection(db, 'categories'), { name, enc });
+      await addDoc(collection(db, 'categories'), { name });
     }
     closeCategoryDialog();
   };
@@ -213,6 +208,5 @@ export const useCategoryStore = defineStore('category', () => {
     openCategoryDialog,
     closeCategoryDialog,
     categoryNameFor,
-    getCatEnc,
   };
 });

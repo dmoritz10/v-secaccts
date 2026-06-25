@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { auth } from '../firebase';
 import Categories from '@/views/Categories.vue';
 import DocCategories from '@/views/DocCategories.vue';
-import NoteCategories from '@/views/NoteCategories.vue';
+import Settings from '@/views/Settings.vue';
 import Accounts from '@/views/Accounts.vue';
 import Documents from '@/views/Documents.vue';
 import ShowAccount from '@/views/ShowAccount.vue';
@@ -19,7 +19,7 @@ const routes = [
   { path: '/docCategories', component: DocCategories, meta: { requiresAuth: true } },
   { path: '/documents', component: Documents, meta: { requiresAuth: true, hideBottomNav: true } },
   { path: '/document/:documentId', component: ShowDocument, meta: { requiresAuth: true, hideBottomNav: true } },
-  { path: '/noteCategories', component: NoteCategories, meta: { requiresAuth: true } },
+  { path: '/settings', component: Settings, meta: { requiresAuth: true } },
   { path: '/login', component: Login, meta: { hideBottomNav: true } },
   { path: '/:pathMatch(.*)*', redirect: '/' }, // catch-all — must be las
 ];

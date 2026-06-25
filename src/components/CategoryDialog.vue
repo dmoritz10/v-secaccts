@@ -1,10 +1,15 @@
 <template>
   <v-dialog v-model="modelValue" max-width="500px" persistent>
     <v-card>
-      <v-card-title>{{ localData.id ? "Edit Category" : "Add Category" }}</v-card-title>
+      <v-card-title>{{ localData.id ? 'Edit Category' : 'Add Category' }}</v-card-title>
       <v-card-text>
         <v-form ref="editForm">
-          <v-text-field v-model.trim="localData.name" persistent-placeholder label="* Category Name" variant="outlined" :rules="[(v) => !!v || 'Required']"/>
+          <v-text-field
+            v-model.trim="localData.name"
+            persistent-placeholder
+            label="* Category Name"
+            variant="outlined"
+            :rules="[(v) => !!v || 'Required']" />
         </v-form>
       </v-card-text>
       <v-card-actions>
@@ -17,13 +22,13 @@
 </template>
 
 <script setup>
-import { ref, toRaw } from "vue";
+import { ref, toRaw } from 'vue';
 
 const modelValue = defineModel(); // Dialog visibility
 const props = defineProps({
   category: { type: Object, required: true }, // The blueprint or record
 });
-const emit = defineEmits(["save", "cancel"]);
+const emit = defineEmits(['save', 'cancel']);
 
 const editForm = ref(null);
 
@@ -35,7 +40,7 @@ async function saveEdit() {
   const { valid } = await editForm.value?.validate();
   if (valid) {
     // 5. Send a clean, deep-cloned copy back to the store
-    emit("save", JSON.parse(JSON.stringify(localData.value)));
+    emit('save', JSON.parse(JSON.stringify(localData.value)));
   }
 }
 </script>

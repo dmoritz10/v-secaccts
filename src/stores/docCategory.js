@@ -5,7 +5,7 @@ import { collection, query, onSnapshot, addDoc, updateDoc, doc, getDocs, where, 
 import { useDocumentStore } from './document';
 import { toast, alertDialog, confirmDialog } from '@/ui/dialogState.js';
 
-const BLANK_DOCCATEGORY = { name: '', enc: false };
+const BLANK_DOCCATEGORY = { name: '' };
 
 export const useDocCategoryStore = defineStore('docCategory', () => {
   const documentStore = useDocumentStore();
@@ -132,11 +132,6 @@ export const useDocCategoryStore = defineStore('docCategory', () => {
     return category ? category.name : 'N/A';
   };
 
-  const getCatEnc = (docCategoryId) => {
-    const category = state.items.find((cat) => cat.id === docCategoryId);
-    return category ? category.enc : false;
-  };
-
   const openDocCategoryDialog = (category = null) => {
     state.selectedDocCategory = category ? category : { ...BLANK_DOCCATEGORY };
     dialog.value = true;
@@ -150,13 +145,13 @@ export const useDocCategoryStore = defineStore('docCategory', () => {
   // 3. Receive the cleaned data from the dialog
   const saveDocCategory = async (categoryData) => {
     console.log('saveDocCat', saveDocCategory);
-    const { id, name, enc } = categoryData;
+    const { id, name } = categoryData;
     if (!name) return;
 
     if (id) {
-      await updateDoc(doc(db, 'docCategories', id), { name, enc });
+      await updateDoc(doc(db, 'docCategories', id), { name });
     } else {
-      await addDoc(collection(db, 'docCategories'), { name, enc });
+      await addDoc(collection(db, 'docCategories'), { name });
     }
     closeDocCategoryDialog();
   };
@@ -211,6 +206,5 @@ export const useDocCategoryStore = defineStore('docCategory', () => {
     openDocCategoryDialog,
     closeDocCategoryDialog,
     docCategoryNameFor,
-    getCatEnc,
   };
 });

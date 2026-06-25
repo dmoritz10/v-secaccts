@@ -19,23 +19,26 @@
 
       <v-row dense class="ma-3 pa-3" style="background-color: #f9f9f9">
         <v-col>
-          <v-btn color="primary" class="pa-2" @click.stop="checkEncryptedDataField">checkEncryptedDataField</v-btn>
+          <v-btn color="primary" variant="outlined" class="pa-2" @click.stop="openChangePasswordDialog">
+            Change password
+          </v-btn>
         </v-col>
       </v-row>
       <v-row dense class="ma-3 pa-3" style="background-color: #f9f9f9">
         <v-col>
-          <v-btn color="primary" class="pa-2" @click.stop="checkForUnencrypted">checkForUnencrypted</v-btn>
+          <v-btn color="primary" variant="outlined" class="pa-2" @click.stop="testBlobRoundtrip">
+            testBlobRoundtrip
+          </v-btn>
         </v-col>
       </v-row>
       <v-row dense class="ma-3 pa-3" style="background-color: #f9f9f9">
         <v-col>
-          <v-btn color="primary" class="pa-2" @click.stop="about">About</v-btn>
+          <v-btn color="primary" variant="outlined" class="pa-2" @click.stop="about">About</v-btn>
         </v-col>
       </v-row>
     </v-container>
 
     <template>
-      <v-btn @click="openChangePasswordDialog">Change Password</v-btn>
       <PasswordChangeDialog ref="pwdDialog" />
     </template>
   </v-container>
@@ -51,7 +54,6 @@ import { signOut } from 'firebase/auth';
 import CategoryDialog from '@/components/CategoryDialog.vue';
 import PasswordChangeDialog from '@/components/PasswordChangeDialog.vue';
 import { alertDialog } from '@/ui/dialogState.js';
-import { encryptCat, decryptCat } from '@/services/common';
 import { clearKey } from '@/services/keyVault';
 import { marked } from 'marked';
 import { getStorage } from 'firebase/storage';
@@ -70,6 +72,8 @@ import {
   writeBatch,
   orderBy,
 } from 'firebase/firestore';
+import { encryptBlob, decryptBlob } from '../services/enc.js';
+
 const menuOpen = ref(false);
 const router = useRouter();
 const route = useRoute();
@@ -82,6 +86,17 @@ function openChangePasswordDialog() {
   pwdDialog.value.open();
 }
 
+// quick manual test, paste into a component or run in browser console
+async function testBlobRoundtrip() {
+  const original = new Blob(['hello world test content'], { type: 'text/plain' });
+
+  const encrypted = await encryptBlob(original);
+  console.log('Encrypted size:', encrypted.size, 'Original size:', original.size);
+
+  const decrypted = await decryptBlob(encrypted, 'text/plain');
+  const text = await decrypted.text();
+  console.log('Round-tripped text:', text); // should be: hello world test content
+}
 async function checkEncryptedDataField() {
   const collections = ['accounts', 'documents'];
   const problems = {};

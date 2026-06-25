@@ -1,8 +1,13 @@
 <template>
-  <!-- <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue')" max-width="600"> -->
   <v-dialog v-model="modelValue" max-width="500px" persistent>
     <v-card>
-      <v-card-title>{{ formData.documentId ? 'Edit Document' : 'Add Document' }}</v-card-title>
+      <v-card-title class="d-flex align-center sticky-header border-b mx-2">
+        <span>{{ formData.documentId ? 'Edit Document' : 'Add Document' }}</span>
+        <v-spacer></v-spacer>
+        <v-btn color="primary" variant="text" class="px-0" @click="saveEdit(formData)">Save</v-btn>
+        <v-btn color="error" variant="text" class="px-0" @click="$emit('cancel', {})">Cancel</v-btn>
+      </v-card-title>
+
       <v-card-text>
         <v-form ref="editForm">
           <v-select
@@ -36,11 +41,6 @@
           <v-checkbox v-model="formData.favorite" label="Favorite"></v-checkbox>
         </v-form>
       </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="primary" @click="saveEdit(formData)">Save</v-btn>
-        <v-btn color="error" @click="$emit('cancel', {})">Cancel</v-btn>
-      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
@@ -98,3 +98,11 @@ const props = defineProps({
 // const emit = defineEmits(["update:modelValue", "save", "cancel"]);
 const emit = defineEmits(['save', 'cancel']);
 </script>
+<style scoped>
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: white;
+}
+</style>

@@ -24,7 +24,6 @@
                     </template>
 
                     <v-list>
-                      <
                       <v-list-item @click="goToAllDocuments">
                         <v-list-item-title>Show all Documents</v-list-item-title>
                       </v-list-item>
@@ -85,13 +84,7 @@
                 {{ docCategory.name }}
               </v-card-title>
               <v-spacer></v-spacer>
-              <v-btn
-                flat
-                outlined
-                :class="['crypt-btn', 'close-btn', docCategory.enc ? 'bg-red-lighten-2' : 'bg-green-lighten-2']"
-                @click.stop="cryptCat(docCategory)">
-                {{ docCategory.enc ? 'decrypt' : 'encrypt' }}
-              </v-btn>
+
               <v-btn
                 icon
                 small
@@ -149,7 +142,6 @@ import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 import DocCategoryDialog from '@/components/DocCategoryDialog.vue';
 import { alertDialog } from '@/ui/dialogState.js';
-import { encryptCat, decryptCat } from '@/services/common';
 import { clearKey } from '@/services/keyVault';
 import { marked } from 'marked';
 import { getStorage } from 'firebase/storage';
@@ -250,12 +242,6 @@ const handleSignOut = async () => {
     clearKey();
     router.replace('/');
   }
-};
-
-const cryptCat = async (cat) => {
-  if (cat.enc) {
-    await decryptCat(cat, 'documents');
-  } else await encryptCat(cat, 'documents');
 };
 
 const about = async () => {
