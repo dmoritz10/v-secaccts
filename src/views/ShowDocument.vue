@@ -56,7 +56,7 @@
               </tr>
 
               <tr v-if="currentDocument?.docNbr">
-                <td class="text-green-darken-3 font-weight-bold">Doc Nbr</td>
+                <td class="text-green-darken-3 font-weight-bold">{{ docNbrFieldLabel }}</td>
                 <td>
                   <h3>{{ currentDocument?.docNbr }}</h3>
                 </td>
@@ -68,7 +68,7 @@
                 </td>
               </tr>
               <tr v-if="currentDocument?.pinNbr">
-                <td class="text-green-darken-3 font-weight-bold">Pin Nbr</td>
+                <td class="text-green-darken-3 font-weight-bold">{{ pinNbrFieldLabel }}</td>
                 <td>
                   <h3>{{ currentDocument?.pinNbr }}</h3>
                 </td>
@@ -215,6 +215,13 @@ const currentDocument = computed(() => {
   return rtn;
 });
 
+const selectedCategory = computed(() =>
+  docCategoryStore.state.items.find((c) => c.id === currentDocument.value.docCategoryId)
+);
+
+const docNbrFieldLabel = computed(() => selectedCategory.value?.docNbrFieldLabel || 'Doc Nbr');
+const pinNbrFieldLabel = computed(() => selectedCategory.value?.pinNbrFieldLabel || 'Pin Nbr');
+
 function revokePreviews() {
   [frontFullUrl, backFullUrl].forEach((r) => {
     if (r.value) URL.revokeObjectURL(r.value);
@@ -271,6 +278,7 @@ watch(
   },
   { immediate: true }
 );
+
 onBeforeUnmount(() => {
   revokePreviews();
 });

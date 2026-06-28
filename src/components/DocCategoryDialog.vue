@@ -13,17 +13,19 @@
             variant="outlined"
             :rules="[(v) => !!v || 'Required']" />
           <v-text-field
-            v-model="localData.docNbrField1Label"
+            v-model="localData.docNbrFieldLabel"
             label="Document Nbr Field Label"
             autocomplete="off"
             variant="outlined"
-            clearable></v-text-field>
+            clearable
+            :rules="[(v) => !!v || 'Required']"></v-text-field>
           <v-text-field
-            v-model="localData.pinNbrField1Label"
+            v-model="localData.pinNbrFieldLabel"
             label="Pin Nbr Field Label"
             autocomplete="off"
             variant="outlined"
-            clearable></v-text-field>
+            clearable
+            :rules="[(v) => !!v || 'Required']"></v-text-field>
         </v-form>
       </v-card-text>
       <v-card-actions>
@@ -40,7 +42,7 @@ import { ref, toRaw } from 'vue';
 
 const modelValue = defineModel(); // Dialog visibility
 const props = defineProps({
-  docCategory: { type: Object, required: true }, // The blueprint or record
+  formData: { type: Object, required: true }, // The blueprint or record
 });
 const emit = defineEmits(['save', 'cancel']);
 

@@ -128,7 +128,6 @@
       v-if="docCategoryStore.dialog"
       v-model="docCategoryStore.dialog"
       :form-data="docCategoryStore.state.formData"
-      :docCategory="docCategoryStore.state.selectedDocCategory"
       @save="docCategoryStore.saveDocCategory"
       @cancel="docCategoryStore.closeDocCategoryDialog" />
   </v-container>

@@ -45,13 +45,13 @@
             density="compact"></v-text-field>
           <v-text-field
             v-model="formData.docNbr"
-            label="Document Nbr"
+            :label="docNbrFieldLabel"
             autocomplete="off"
             variant="outlined"
             clearable></v-text-field>
           <v-text-field
             v-model="formData.pinNbr"
-            label="Pin Nbr"
+            :label="pinNbrFieldLabel"
             autocomplete="off"
             variant="outlined"
             clearable></v-text-field>
@@ -175,6 +175,13 @@ const docCategoryStore = useDocCategoryStore();
 const documentStore = useDocumentStore();
 const editForm = ref(null);
 
+const selectedCategory = computed(() =>
+  docCategoryStore.state.items.find((c) => c.id === props.formData.docCategoryId)
+);
+
+const docNbrFieldLabel = computed(() => selectedCategory.value?.docNbrFieldLabel || 'Doc Nbr');
+const pinNbrFieldLabel = computed(() => selectedCategory.value?.pinNbrFieldLabel || 'Pin Nbr');
+
 const frontFileInput = ref(null);
 const frontCameraInput = ref(null);
 const backFileInput = ref(null);
@@ -211,10 +218,6 @@ const backIsImage = computed(() => {
   if (file) return file.type.startsWith('image/');
   return props.formData.backType ? props.formData.backType.startsWith('image/') : true;
 });
-
-function isHeic(file) {
-  return file.type === 'image/heic' || file.type === 'image/heif' || /\.hei[cf]$/i.test(file.name);
-}
 
 async function convertHeicToJpeg(file) {
   const { default: heic2any } = await import('heic2any');

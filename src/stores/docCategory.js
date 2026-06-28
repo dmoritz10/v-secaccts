@@ -5,7 +5,7 @@ import { collection, query, onSnapshot, addDoc, updateDoc, doc, getDocs, where, 
 import { useDocumentStore } from './document';
 import { toast, alertDialog, confirmDialog } from '@/ui/dialogState.js';
 
-const BLANK_DOCCATEGORY = { name: '' };
+const BLANK_DOCCATEGORY = { name: '', docNbrFieldLabel: 'Doc Nbr', pinNbrFieldLabel: 'Pin Nbr' };
 
 export const useDocCategoryStore = defineStore('docCategory', () => {
   const documentStore = useDocumentStore();
@@ -133,7 +133,7 @@ export const useDocCategoryStore = defineStore('docCategory', () => {
   };
 
   const openDocCategoryDialog = (category = null) => {
-    state.selectedDocCategory = category ? category : { ...BLANK_DOCCATEGORY };
+    state.formData = category ? category : { ...BLANK_DOCCATEGORY };
     dialog.value = true;
   };
 
@@ -145,13 +145,13 @@ export const useDocCategoryStore = defineStore('docCategory', () => {
   // 3. Receive the cleaned data from the dialog
   const saveDocCategory = async (categoryData) => {
     console.log('saveDocCat', saveDocCategory);
-    const { id, name, docNbrField1Label, pinNbrField1Label } = categoryData;
+    const { id, name, docNbrFieldLabel, pinNbrFieldLabel } = categoryData;
     if (!name) return;
 
     if (id) {
-      await updateDoc(doc(db, 'docCategories', id), { name, docNbrField1Label, pinNbrField1Label });
+      await updateDoc(doc(db, 'docCategories', id), { name, docNbrFieldLabel, pinNbrFieldLabel });
     } else {
-      await addDoc(collection(db, 'docCategories'), { name, docNbrField1Label, pinNbrField1Label });
+      await addDoc(collection(db, 'docCategories'), { name, docNbrFieldLabel, pinNbrFieldLabel });
     }
     closeDocCategoryDialog();
   };
