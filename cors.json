@@ -1,0 +1,9 @@
+[
+  {
+    "origin": ["http://localhost:3000", "https://v-secaccts.web.app"],
+    "method": ["GET"],
+    "maxAgeSeconds": 3600,
+
+    "doc": "This is necessary to correct cors issues on reading document from localhost. The fix was done in Google Cloud Console, so this file is not necessary and is here for documentation only https://console.cloud.google.com/welcome?project=v-secaccts&cloudshell=true "
+  }
+]

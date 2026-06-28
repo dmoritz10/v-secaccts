@@ -55,6 +55,7 @@
                     v-model="docCategoryStore.state.searchQuery"
                     placeholder="Search Categories ..."
                     variant="solo-filled"
+                    autocomplete="off"
                     rounded="lg"
                     density="comfortable"
                     prepend-inner-icon="mdi-magnify"
@@ -126,6 +127,7 @@
     <DocCategoryDialog
       v-if="docCategoryStore.dialog"
       v-model="docCategoryStore.dialog"
+      :form-data="docCategoryStore.state.formData"
       :docCategory="docCategoryStore.state.selectedDocCategory"
       @save="docCategoryStore.saveDocCategory"
       @cancel="docCategoryStore.closeDocCategoryDialog" />

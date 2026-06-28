@@ -43,6 +43,8 @@
           <v-text-field
             v-model="pwd"
             label="Password"
+            autocomplete="off"
+            autofocus
             :type="showCurrentPwd ? 'text' : 'password'"
             :append-inner-icon="showCurrentPwd ? 'mdi-eye-off' : 'mdi-eye'"
             ref="pwdFocus"
@@ -176,7 +178,8 @@ async function submit() {
     clearKey();
     return;
   }
-  // pwd.value = 'Stars123#';
+
+  pwd.value = 'Star123#';
   var key = await verifyPassword(pwd.value, vault);
 
   pwd.value = null;

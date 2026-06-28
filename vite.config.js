@@ -51,6 +51,7 @@ export default defineConfig({
         ],
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB, up from default 2 MiB
         globPatterns: ['**/*.{js,css,html,ico,svg}'],
         runtimeCaching: [
           {
@@ -78,4 +79,7 @@ export default defineConfig({
     },
   },
   base: '/', // Required for Firebase Hosting
+  server: {
+    port: 3000,
+  },
 });

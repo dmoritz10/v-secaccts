@@ -1,6 +1,6 @@
 <template>
   <v-container fluid class="h-100 ma-0 pa-0 responsive-container">
-    <template v-if="documentStore.isLoaded && currentDocumentIsLoaded">
+    <template v-if="documentStore.isLoaded && textIsLoaded">
       <v-row class="position-sticky top-0 mx-0 px-0 mb-2 pb-2 grey lighten-4" style="z-index: 20">
         <v-col cols="12" class="pb-0 px-0">
           <v-sheet class="mx-3 px-4 pt-3 pb-3 mt-1 mb-0 border" elevation="0" rounded>
@@ -103,6 +103,36 @@
                     @click="copyToClipboard(currentDocument?.notes, 'Notes')"></v-icon>
                 </td>
               </tr>
+              <tr v-if="currentDocument?.frontPath">
+                <td class="text-green-darken-3 font-weight-bold">Front</td>
+                <td>
+                  <div class="preview-wrapper">
+                    <img :src="frontPreviewUrl" class="doc-thumb" @click="viewFile(frontFullUrl)" />
+                    <v-chip v-if="currentDocument.frontType === 'application/pdf'" size="x-small" class="pdf-badge">
+                      PDF
+                    </v-chip>
+                  </div>
+                </td>
+                <td class="icon-cell">
+                  <v-icon size="small" icon="mdi-open-in-new" @click="viewFile(frontFullUrl)"></v-icon>
+                </td>
+              </tr>
+
+              <tr v-if="currentDocument?.backPath">
+                <td class="text-green-darken-3 font-weight-bold">Back</td>
+                <td>
+                  <div class="preview-wrapper">
+                    <img :src="backPreviewUrl" class="doc-thumb" @click="viewFile(backFullUrl)" />
+                    <v-chip v-if="currentDocument.backType === 'application/pdf'" size="x-small" class="pdf-badge">
+                      PDF
+                    </v-chip>
+                  </div>
+                </td>
+                <td class="icon-cell">
+                  <v-icon size="small" icon="mdi-open-in-new" @click="viewFile(backFullUrl)"></v-icon>
+                </td>
+              </tr>
+
               <tr v-if="currentDocument?.lastChange">
                 <td class="text-green-darken-3 font-weight-bold">Last Change</td>
                 <td>
@@ -153,12 +183,12 @@
 </template>
 
 <script setup>
-import { computed, onMounted, watch, nextTick, ref, toRef } from 'vue';
+import { computed, onMounted, onBeforeUnmount, watch, nextTick, ref, toRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useDocumentStore } from '@/stores/document';
 import { useDocCategoryStore } from '@/stores/docCategory';
 import DocumentDialog from '@/components/DocumentDialog.vue';
-
+import { renderPdfThumbnail } from '@/services/pdfThumbnail';
 import { decryptAcctReactive } from '@/services/common';
 import { until } from '@vueuse/core';
 import { toast, alertDialog } from '@/ui/dialogState.js';
@@ -169,32 +199,81 @@ const router = useRouter();
 const documentStore = useDocumentStore();
 const docCategoryStore = useDocCategoryStore();
 
-const showPassword = ref(true); // Toggle for password visibility
+const textIsLoaded = ref(false);
+const filesAreLoaded = ref(false);
 
-const currentDocumentIsLoaded = ref(false);
+const frontPreviewUrl = ref(null); // thumbnail, for inline <img>
+const frontFullUrl = ref(null); // full file, for "View" button
+const backPreviewUrl = ref(null);
+const backFullUrl = ref(null);
 
-// Compute the index reactively
 const idx = computed(() => documentStore.state.items.findIndex((acct) => acct.id === route.params.documentId));
 
-// One-way reactive computed ref
 const currentDocument = computed(() => {
-  console.log('currentDocument', idx.value);
   const acct = documentStore.state.items[idx.value];
-  console.log('currentDocument', acct, idx.value, route.params.documentId, documentStore.state.items);
-
-  const rtn = acct ? { ...acct } : null; // shallow clone breaks reference
+  const rtn = acct ? { ...acct } : null;
   return rtn;
 });
+
+function revokePreviews() {
+  [frontFullUrl, backFullUrl].forEach((r) => {
+    if (r.value) URL.revokeObjectURL(r.value);
+    r.value = null;
+  });
+  frontPreviewUrl.value = null; // may be a data URL (PDF thumb) — nothing to revoke
+  backPreviewUrl.value = null;
+}
+
+async function loadFilePreviews(doc) {
+  revokePreviews();
+  if (!doc) return;
+
+  if (doc.frontPath) {
+    try {
+      const blob = await documentStore.downloadDocumentFile(doc.frontPath, doc.frontType);
+      frontFullUrl.value = URL.createObjectURL(blob);
+      frontPreviewUrl.value = doc.frontType === 'application/pdf' ? await renderPdfThumbnail(blob) : frontFullUrl.value;
+    } catch (e) {
+      console.error('Failed to load front file:', e);
+    }
+  }
+
+  if (doc.backPath) {
+    try {
+      const blob = await documentStore.downloadDocumentFile(doc.backPath, doc.backType);
+      backFullUrl.value = URL.createObjectURL(blob);
+      backPreviewUrl.value = doc.backType === 'application/pdf' ? await renderPdfThumbnail(blob) : backFullUrl.value;
+    } catch (e) {
+      console.error('Failed to load back file:', e);
+    }
+  }
+}
+
+const frontIsImage = computed(() => currentDocument.value?.frontType?.startsWith('image/'));
+const backIsImage = computed(() => currentDocument.value?.backType?.startsWith('image/'));
+
+function viewFile(url) {
+  if (!url) return;
+  window.open(url, '_blank');
+}
 
 watch(
   currentDocument,
   async () => {
-    currentDocumentIsLoaded.value = false;
+    textIsLoaded.value = false;
+    filesAreLoaded.value = false;
+
     await decryptAcctReactive(currentDocument.value);
-    currentDocumentIsLoaded.value = true;
+    textIsLoaded.value = true; // text ready — render the form now
+
+    await loadFilePreviews(currentDocument.value);
+    filesAreLoaded.value = true; // images ready — render them now
   },
   { immediate: true }
 );
+onBeforeUnmount(() => {
+  revokePreviews();
+});
 
 const filteredDocuments = computed(() => documentStore.filteredDocuments);
 
@@ -229,10 +308,6 @@ onMounted(async () => {
   // Wait until currentDocument is defined
   await until(() => documentStore.state.items.length > 0);
 
-  await decryptAcctReactive(currentDocument.value);
-
-  // Now data is ready for template
-  currentDocumentIsLoaded.value = true;
   console.log('onMount complete');
 });
 
@@ -269,7 +344,7 @@ const handleSave = async (formData) => {
       query: {
         id: formData.docCategoryId,
         name: docCategoryStore.docCategoryNameFor(formData.docCategoryId),
-        scrollTo: formData.accountId,
+        scrollTo: formData.documentId,
         ts: Date.now(),
       },
     });
@@ -325,5 +400,12 @@ const handleSave = async (formData) => {
 .compressed-table :deep(.icon-cell) {
   width: 48px; /* Fixed width for copy icon */
   text-align: center;
+}
+.doc-thumb {
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: contain;
+  border-radius: 4px;
+  cursor: pointer;
 }
 </style>

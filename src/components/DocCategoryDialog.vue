@@ -8,8 +8,22 @@
             v-model.trim="localData.name"
             persistent-placeholder
             label="* Document Category Name"
+            autocomplete="off"
+            autofocus
             variant="outlined"
             :rules="[(v) => !!v || 'Required']" />
+          <v-text-field
+            v-model="localData.docNbrField1Label"
+            label="Document Nbr Field Label"
+            autocomplete="off"
+            variant="outlined"
+            clearable></v-text-field>
+          <v-text-field
+            v-model="localData.pinNbrField1Label"
+            label="Pin Nbr Field Label"
+            autocomplete="off"
+            variant="outlined"
+            clearable></v-text-field>
         </v-form>
       </v-card-text>
       <v-card-actions>
@@ -34,7 +48,7 @@ const editForm = ref(null);
 
 // 4. Create the sandbox using structuredClone
 // This is modern, fast, and breaks all reactive links to the store.
-const localData = ref(JSON.parse(JSON.stringify(props.docCategory)));
+const localData = ref(JSON.parse(JSON.stringify(props.formData)));
 
 async function saveEdit() {
   const { valid } = await editForm.value?.validate();

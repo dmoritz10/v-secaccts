@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, reactive, ref, nextTick } from 'vue';
 import { db } from '@/firebase';
-import { collection, query, onSnapshot, addDoc, updateDoc, doc, getDocs, where, writeBatch } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, updateDoc, doc, getDocs, where, deleteDoc } from 'firebase/firestore';
 import { useDocumentStore } from './document';
 import { toast, alertDialog, confirmDialog } from '@/ui/dialogState.js';
 
@@ -145,47 +145,40 @@ export const useDocCategoryStore = defineStore('docCategory', () => {
   // 3. Receive the cleaned data from the dialog
   const saveDocCategory = async (categoryData) => {
     console.log('saveDocCat', saveDocCategory);
-    const { id, name } = categoryData;
+    const { id, name, docNbrField1Label, pinNbrField1Label } = categoryData;
     if (!name) return;
 
     if (id) {
-      await updateDoc(doc(db, 'docCategories', id), { name });
+      await updateDoc(doc(db, 'docCategories', id), { name, docNbrField1Label, pinNbrField1Label });
     } else {
-      await addDoc(collection(db, 'docCategories'), { name });
+      await addDoc(collection(db, 'docCategories'), { name, docNbrField1Label, pinNbrField1Label });
     }
     closeDocCategoryDialog();
   };
 
   const deleteDocCategory = async (docCategoryId) => {
-    var catName = categoryNameFor(docCategoryId);
+    var catName = docCategoryNameFor(docCategoryId);
     const accountsRef = collection(db, 'documents');
     const q = query(accountsRef, where('docCategoryId', '==', docCategoryId));
     const accts = await getDocs(q);
+
     if (accts.docs.length) {
       var msg = `This category is linked to ${accts.docs.length} accounts. Deleting it will also delete those accounts.  <br><br>Continue with deletion ?`;
       var confirmOK = await confirmDialog(`Delete Category ${catName}`, msg);
       if (!confirmOK) return;
     }
 
-    const batch = writeBatch(db);
-
     try {
-      console.log(`Deleting all accounts for docCategoryId: ${docCategoryId}...`);
+      console.log(`Deleting all documents for docCategoryId: ${docCategoryId}...`);
 
-      // Add each account doc to batch delete
-      accts.forEach((docSnap) => {
-        batch.delete(docSnap.ref);
-      });
+      for (const docSnap of accts.docs) {
+        await documentStore.deleteDocument(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+      }
 
-      // Delete the category document itself
-      const categoryRef = doc(db, 'docCategories', docCategoryId);
-      batch.delete(categoryRef);
-
-      // Commit all deletions
-      await batch.commit();
+      await deleteDoc(doc(db, 'docCategories', docCategoryId));
 
       toast(`Category ${catName} deleted`);
-      console.log(`✅ Deleted category ${catName} and ${accts.size} accounts`);
+      console.log(`✅ Deleted category ${catName} and ${accts.size} documents`);
     } catch (error) {
       console.error('Error deleting category:', error);
       alertDialog('Error deleting category', error);

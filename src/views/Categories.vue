@@ -55,6 +55,7 @@
                     v-model="categoryStore.state.searchQuery"
                     placeholder="Search Categories ..."
                     variant="solo-filled"
+                    autocomplete="off"
                     rounded="lg"
                     density="comfortable"
                     prepend-inner-icon="mdi-magnify"

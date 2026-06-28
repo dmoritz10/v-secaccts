@@ -8,6 +8,8 @@
             v-model.trim="localData.name"
             persistent-placeholder
             label="* Category Name"
+            autocomplete="off"
+            autofocus
             variant="outlined"
             :rules="[(v) => !!v || 'Required']" />
         </v-form>

@@ -1,6 +1,6 @@
 {
   "name": "v-secaccts",
-  "version": "1.0.13",
+  "version": "1.0.23",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,7 +16,9 @@
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.21",
     "firebase": "^11.9.1",
+    "heic2any": "^0.0.4",
     "marked": "^16.4.0",
+    "pdfjs-dist": "^6.1.200",
     "pinia": "^3.0.3",
     "vue": "^3.5.17",
     "vue-router": "^4.5.1",

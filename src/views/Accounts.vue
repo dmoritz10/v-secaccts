@@ -75,6 +75,7 @@
             <v-text-field
               v-model="accountStore.searchQuery"
               label="Search Providers"
+              autocomplete="off"
               prepend-inner-icon="mdi-magnify"
               clearable
               class="search-field border rounded"

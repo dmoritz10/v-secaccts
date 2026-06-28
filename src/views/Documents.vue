@@ -66,6 +66,7 @@
             <v-text-field
               v-model="documentStore.searchQuery"
               label="Search Documents"
+              autocomplete="off"
               prepend-inner-icon="mdi-magnify"
               clearable
               class="search-field border rounded"
@@ -261,7 +262,8 @@ watch(
 
 const handleSave = async (formData) => {
   try {
-    const acctId = await documentStore.saveDocument(formData);
+    const documentId = await documentStore.saveDocument(formData);
+    console.log('handleSave', documentId);
     await nextTick();
     documentStore.closeDocumentDialog();
     router.push({
@@ -269,7 +271,7 @@ const handleSave = async (formData) => {
       query: {
         id: formData.docCategoryId,
         name: docCategoryStore.docCategoryNameFor(formData.docCategoryId),
-        scrollTo: acctId,
+        scrollTo: documentId,
         ts: Date.now(),
       },
     });
