@@ -410,8 +410,8 @@ const handleSave = async (formData) => {
   text-align: center;
 }
 .doc-thumb {
-  max-width: 100px;
-  max-height: 100px;
+  max-width: 300px;
+  max-height: 300px;
   object-fit: contain;
   border-radius: 4px;
   cursor: pointer;

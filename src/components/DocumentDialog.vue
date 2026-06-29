@@ -10,16 +10,32 @@
 
       <v-card-text>
         <v-form ref="editForm">
-          <v-select
-            v-model="formData.docCategoryId"
-            label="Category"
-            :items="docCategoryStore.state.items"
-            item-title="name"
-            item-value="id"
-            variant="outlined"
-            required
-            :rules="[(v) => !!v || 'Category is required']"></v-select>
+          <v-row dense>
+            <!-- Category Column (Takes up 8/12 of the width) -->
+            <v-col cols="8">
+              <v-select
+                v-model="formData.docCategoryId"
+                label="Category"
+                :items="docCategoryStore.state.items"
+                item-title="name"
+                item-value="id"
+                variant="outlined"
+                required
+                :rules="[(v) => !!v || 'Category is required']"></v-select>
+            </v-col>
 
+            <!-- Owner Column (Takes up 4/12 of the width, smaller density) -->
+            <v-col cols="4">
+              <v-select
+                v-model="formData.owner"
+                label="Owner"
+                :items="['D', 'C']"
+                variant="outlined"
+                density="compact"
+                required
+                :rules="[(v) => !!v || 'Required']"></v-select>
+            </v-col>
+          </v-row>
           <v-text-field
             v-model="formData.name"
             label="Name"
@@ -84,6 +100,15 @@
                 <v-btn v-if="frontIsImage" icon size="small" variant="text" @click="rotateFront(90)">
                   <v-icon>mdi-rotate-right</v-icon>
                 </v-btn>
+                <v-btn
+                  v-if="frontHasFile"
+                  icon
+                  size="small"
+                  variant="text"
+                  :loading="isAnalyzing"
+                  @click="handleMagicFill('front')">
+                  <v-icon>mdi-creation</v-icon>
+                </v-btn>
                 <v-btn icon size="small" variant="text" color="error" @click="clearFront">
                   <v-icon>mdi-close-circle</v-icon>
                 </v-btn>
@@ -131,6 +156,15 @@
                 <v-btn v-if="backIsImage" icon size="small" variant="text" @click="rotateBack(90)">
                   <v-icon>mdi-rotate-right</v-icon>
                 </v-btn>
+                <v-btn
+                  v-if="backHasFile"
+                  icon
+                  size="small"
+                  variant="text"
+                  :loading="isAnalyzing"
+                  @click="handleMagicFill('back')">
+                  <v-icon>mdi-creation</v-icon>
+                </v-btn>
                 <v-btn icon size="small" variant="text" color="error" @click="clearBack">
                   <v-icon>mdi-close-circle</v-icon>
                 </v-btn>
@@ -170,17 +204,48 @@ import { dayjs } from '@/services/common';
 import { alertDialog } from '@/ui/dialogState.js';
 import { renderPdfThumbnail } from '@/services/pdfThumbnail';
 import { rotateImageBlob } from '@/services/imageRotate';
+import { extractDocumentFields } from '@/services/aiExtract';
 
 const docCategoryStore = useDocCategoryStore();
 const documentStore = useDocumentStore();
 const editForm = ref(null);
 
-const selectedCategory = computed(() =>
+const isAnalyzing = ref(false);
+
+const selectedDocCategory = computed(() =>
   docCategoryStore.state.items.find((c) => c.id === props.formData.docCategoryId)
 );
 
-const docNbrFieldLabel = computed(() => selectedCategory.value?.docNbrFieldLabel || 'Doc Nbr');
-const pinNbrFieldLabel = computed(() => selectedCategory.value?.pinNbrFieldLabel || 'Pin Nbr');
+const docNbrFieldLabel = computed(() => selectedDocCategory.value?.docNbrFieldLabel || 'Doc Nbr');
+const pinNbrFieldLabel = computed(() => selectedDocCategory.value?.pinNbrFieldLabel || 'Pin Nbr');
+
+async function handleMagicFill(side) {
+  const blob = side === 'front' ? await getCurrentFrontBlob() : await getCurrentBackBlob();
+  if (!blob) return;
+
+  isAnalyzing.value = true;
+  try {
+    const extracted = await extractDocumentFields(blob, {
+      docNbrFieldLabel: docNbrFieldLabel.value,
+      pinNbrFieldLabel: pinNbrFieldLabel.value,
+    });
+
+    if (extracted.name) props.formData.name = extracted.name;
+    if (extracted.provider) props.formData.provider = extracted.provider;
+    if (extracted.expiry) props.formData.expiry = extracted.expiry;
+    if (extracted.field1) props.formData.docNbr = extracted.field1; // or field1, matching your actual model field name
+    if (extracted.field2) props.formData.pinNbr = extracted.field2;
+
+    if (extracted.notes) {
+      props.formData.notes = props.formData.notes ? `${props.formData.notes}\n\n${extracted.notes}` : extracted.notes;
+    }
+  } catch (error) {
+    console.error('Magic fill failed:', error);
+    alertDialog?.('Could not analyze image', 'Try again, or fill the form manually.');
+  } finally {
+    isAnalyzing.value = false;
+  }
+}
 
 const frontFileInput = ref(null);
 const frontCameraInput = ref(null);
@@ -206,6 +271,9 @@ const nameExistsRule = computed(() => {
 // Preview shown = newly picked file (if any), else existing stored preview, else nothing
 const frontPreview = computed(() => frontNewPreviewUrl.value || props.formData.frontPreviewUrl);
 const backPreview = computed(() => backNewPreviewUrl.value || props.formData.backPreviewUrl);
+
+const frontHasFile = computed(() => !!(props.formData.frontFile || props.formData.frontPath));
+const backHasFile = computed(() => !!(props.formData.backFile || props.formData.backPath));
 
 const frontIsImage = computed(() => {
   const file = props.formData.frontFile;
