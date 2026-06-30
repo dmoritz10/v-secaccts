@@ -3,7 +3,7 @@ import { computed, reactive, ref } from 'vue';
 import { db, storage } from '@/firebase';
 import { ref as storageRef, uploadBytes, getBytes, deleteObject } from 'firebase/storage';
 import { collection, query, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
-import { alertDialog } from '@/ui/dialogState.js';
+import { alertDialog, confirmDialog } from '@/ui/dialogState.js';
 import { encryptBlob, decryptBlob, encryptMessage, decryptMessage } from '@/services/enc';
 import { encryptAccts, docEncFlds } from '@/services/common';
 import { renderPdfThumbnail } from '@/services/pdfThumbnail';
@@ -20,6 +20,7 @@ export const useDocumentStore = defineStore('document', () => {
       docNbr: null,
       name: null,
       provider: '',
+      owner: '',
       docCategoryId: null,
       favorite: false,
       expiry: null,
@@ -243,6 +244,10 @@ export const useDocumentStore = defineStore('document', () => {
   };
 
   const deleteDocument = async (documentId, docData = null) => {
+    var msg = `This document is will be permanently removed. There is no undo.  <br><br>Continue with deletion ?`;
+    var confirmOK = await confirmDialog(`Delete Document`, msg);
+    if (!confirmOK) return;
+
     try {
       const docSnap = docData || state.items.find((d) => d.id === documentId);
       if (docSnap) {
@@ -306,6 +311,7 @@ export const useDocumentStore = defineStore('document', () => {
     docNbr: null,
     name: null,
     provider: '',
+    owner: '',
     docCategoryId: docCategoryId,
     favorite: false,
     expiry: null,

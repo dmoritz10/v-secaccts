@@ -2,8 +2,8 @@ import { defineStore } from 'pinia';
 import { computed, reactive, ref } from 'vue';
 import { db } from '@/firebase';
 import { collection, query, onSnapshot, addDoc, setDoc, updateDoc, deleteDoc, doc, getDocs } from 'firebase/firestore';
-import { alertDialog } from '@/ui/dialogState.js';
-import { encryptMessage, decryptMessage } from '@/services/enc';
+import { alertDialog, confirmDialog } from '@/ui/dialogState.js';
+import { decryptMessage } from '@/services/enc';
 import { encryptAccts, acctEncFlds } from '@/services/common';
 
 import { watch } from 'vue';
@@ -15,6 +15,7 @@ export const useAccountStore = defineStore('account', () => {
     formData: {
       accountId: null,
       provider: '',
+      owner: '',
       accountNbr: null,
       autoPay: false,
       categoryId: null,
@@ -216,6 +217,10 @@ export const useAccountStore = defineStore('account', () => {
   };
 
   const deleteAccount = async (accountId) => {
+    var msg = `This account is will be permanently removed. There is no undo.  <br><br>Continue with deletion ?`;
+    var confirmOK = await confirmDialog(`Delete Account`, msg);
+    if (!confirmOK) return;
+
     try {
       await deleteDoc(doc(db, 'accounts', accountId));
       console.log('Account deleted:', accountId);
@@ -246,6 +251,7 @@ export const useAccountStore = defineStore('account', () => {
   const createBlankAccount = (categoryId = null) => ({
     accountId: null,
     provider: '',
+    owner: '',
     accountNbr: null,
     autoPay: null,
     categoryId: categoryId,

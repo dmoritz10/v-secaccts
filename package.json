@@ -1,6 +1,6 @@
 {
   "name": "v-secaccts",
-  "version": "1.0.25",
+  "version": "2.0.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@vueuse/core": "^13.6.0",
+    "cropperjs": "^1.6.2",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.21",
     "firebase": "^11.9.1",

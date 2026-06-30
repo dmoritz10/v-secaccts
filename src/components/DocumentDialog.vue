@@ -11,7 +11,6 @@
       <v-card-text>
         <v-form ref="editForm">
           <v-row dense>
-            <!-- Category Column (Takes up 8/12 of the width) -->
             <v-col cols="8">
               <v-select
                 v-model="formData.docCategoryId"
@@ -23,17 +22,13 @@
                 required
                 :rules="[(v) => !!v || 'Category is required']"></v-select>
             </v-col>
-
-            <!-- Owner Column (Takes up 4/12 of the width, smaller density) -->
             <v-col cols="4">
               <v-select
                 v-model="formData.owner"
                 label="Owner"
-                :items="['D', 'C']"
+                :items="['D', 'C', '']"
                 variant="outlined"
-                density="compact"
-                required
-                :rules="[(v) => !!v || 'Required']"></v-select>
+                required></v-select>
             </v-col>
           </v-row>
           <v-text-field
@@ -93,12 +88,16 @@
                   PDF
                 </v-chip>
               </div>
-              <div class="d-flex flex-column">
+
+              <div class="d-flex justify-center">
                 <v-btn v-if="frontIsImage" icon size="small" variant="text" @click="rotateFront(-90)">
                   <v-icon>mdi-rotate-left</v-icon>
                 </v-btn>
                 <v-btn v-if="frontIsImage" icon size="small" variant="text" @click="rotateFront(90)">
                   <v-icon>mdi-rotate-right</v-icon>
+                </v-btn>
+                <v-btn v-if="frontHasFile" icon size="small" variant="text" @click="handleCrop('front')">
+                  <v-icon>mdi-crop</v-icon>
                 </v-btn>
                 <v-btn
                   v-if="frontHasFile"
@@ -149,12 +148,15 @@
                   PDF
                 </v-chip>
               </div>
-              <div class="d-flex flex-column">
+              <div class="d-flex flex-row">
                 <v-btn v-if="backIsImage" icon size="small" variant="text" @click="rotateBack(-90)">
                   <v-icon>mdi-rotate-left</v-icon>
                 </v-btn>
                 <v-btn v-if="backIsImage" icon size="small" variant="text" @click="rotateBack(90)">
                   <v-icon>mdi-rotate-right</v-icon>
+                </v-btn>
+                <v-btn v-if="frontHasFile" icon size="small" variant="text" @click="handleCrop('back')">
+                  <v-icon>mdi-crop</v-icon>
                 </v-btn>
                 <v-btn
                   v-if="backHasFile"
@@ -194,6 +196,7 @@
       </v-card-text>
     </v-card>
   </v-dialog>
+  <ImageCropDialog ref="cropDialogRef" />
 </template>
 
 <script setup>
@@ -202,9 +205,10 @@ import { useDocumentStore } from '@/stores/document';
 import { ref, computed, onBeforeUnmount } from 'vue';
 import { dayjs } from '@/services/common';
 import { alertDialog } from '@/ui/dialogState.js';
-import { renderPdfThumbnail } from '@/services/pdfThumbnail';
+import { renderPdfThumbnail, renderPdfPageToCanvas } from '@/services/pdfThumbnail';
 import { rotateImageBlob } from '@/services/imageRotate';
 import { extractDocumentFields } from '@/services/aiExtract';
+import ImageCropDialog from '@/components/ImageCropDialog.vue';
 
 const docCategoryStore = useDocCategoryStore();
 const documentStore = useDocumentStore();
@@ -256,6 +260,41 @@ const backCameraInput = ref(null);
 const frontNewPreviewUrl = ref(null);
 const backNewPreviewUrl = ref(null);
 
+const cropDialogRef = ref(null);
+
+async function handleCrop(side) {
+  const blob = side === 'front' ? await getCurrentFrontBlob() : await getCurrentBackBlob();
+  if (!blob) return;
+
+  let sourceUrl;
+  let isObjectUrl = false;
+
+  if (blob.type === 'application/pdf') {
+    const canvas = await renderPdfPageToCanvas(blob, 1, 2);
+    sourceUrl = canvas.toDataURL('image/png');
+  } else {
+    sourceUrl = URL.createObjectURL(blob);
+    isObjectUrl = true;
+  }
+
+  const croppedBlob = await cropDialogRef.value.open(sourceUrl, { isObjectUrl });
+  if (!croppedBlob) return; // user cancelled
+
+  const file = new File([croppedBlob], `${side}.jpg`, { type: 'image/jpeg' });
+  const url = URL.createObjectURL(croppedBlob);
+
+  if (side === 'front') {
+    if (frontNewPreviewUrl.value?.startsWith('blob:')) URL.revokeObjectURL(frontNewPreviewUrl.value);
+    frontNewPreviewUrl.value = url;
+    props.formData.frontFile = file;
+    props.formData.removeFront = false;
+  } else {
+    if (backNewPreviewUrl.value?.startsWith('blob:')) URL.revokeObjectURL(backNewPreviewUrl.value);
+    backNewPreviewUrl.value = url;
+    props.formData.backFile = file;
+    props.formData.removeBack = false;
+  }
+}
 const nameExistsRule = computed(() => {
   return (value) => {
     if (!value) return 'Document Name is required';
@@ -484,6 +523,7 @@ const emit = defineEmits(['save', 'cancel']);
 
 .file-preview {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
   border: 1px solid rgba(0, 0, 0, 0.12);

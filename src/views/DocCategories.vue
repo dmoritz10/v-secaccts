@@ -27,12 +27,19 @@
                       <v-list-item @click="goToAllDocuments">
                         <v-list-item-title>Show all Documents</v-list-item-title>
                       </v-list-item>
-                      <v-list-item @click="about">
-                        <v-list-item-title>About</v-list-item-title>
-                      </v-list-item>
-                      <v-divider></v-divider>
+
                       <v-list-item @click="handleSignOut">
                         <v-list-item-title>Sign out</v-list-item-title>
+                      </v-list-item>
+                      <v-divider></v-divider>
+                      <v-list-item>
+                        <v-list-item-title>
+                          <div class="text-caption">
+                            Version: {{ VERSION }}
+                            <br />
+                            {{ BUILD_DATE }}
+                          </div>
+                        </v-list-item-title>
                       </v-list-item>
                     </v-list>
                   </v-menu>
@@ -78,7 +85,8 @@
             <v-card
               elevation="2"
               class="d-flex align-center pa-2 mx-3"
-              color="amber-lighten-4"
+              color="blue-lighten-4"
+              variant="elevated"
               :id="`docCategory-${docCategory.id}`"
               @click="goToDocCategoryAccounts(docCategory.id)">
               <v-card-title class="text-h6 wrap-card-title">

@@ -5,7 +5,7 @@
         <v-col cols="12" class="pb-0 px-0">
           <v-sheet class="mx-3 px-4 pt-3 pb-3 mt-1 mb-0 border" elevation="0" rounded>
             <v-row class="align-center">
-              <v-col cols="1">
+              <v-col cols="2">
                 <v-icon size="32" color="black" style="cursor: pointer" @click="returnToDocuments">
                   mdi-chevron-left
                 </v-icon>
@@ -16,7 +16,16 @@
                 </h2>
               </v-col>
               <!-- Sandwich / 3-dot menu -->
-              <v-col cols="1" class="d-flex justify-end"></v-col>
+              <v-col cols="2" class="d-flex justify-end">
+                <v-chip
+                  v-if="currentDocument.owner"
+                  size="large"
+                  class="px-2 font-weight-bold"
+                  :color="currentDocument.owner === 'D' ? 'blue' : 'green'"
+                  variant="tonal">
+                  {{ currentDocument.owner }}
+                </v-chip>
+              </v-col>
             </v-row>
           </v-sheet>
         </v-col>
@@ -39,6 +48,19 @@
                     @click="
                       copyToClipboard(docCategoryNameFor(currentDocument?.docCategoryId) || 'N/A', 'Category')
                     "></v-icon>
+                </td>
+              </tr>
+
+              <tr v-if="currentDocument?.provider">
+                <td class="text-green-darken-3 font-weight-bold">Provider</td>
+                <td>
+                  <h3>{{ currentDocument?.provider }}</h3>
+                </td>
+                <td class="icon-cell">
+                  <v-icon
+                    size="small"
+                    icon="mdi-content-copy"
+                    @click="copyToClipboard(currentDocument?.docNbr, 'Doc Nbr')"></v-icon>
                 </td>
               </tr>
 
@@ -93,8 +115,12 @@
               </tr>
               <tr v-if="currentDocument?.notes">
                 <td class="text-green-darken-3 font-weight-bold">Notes</td>
-                <td>
-                  <h3>{{ currentDocument?.notes }}</h3>
+                <td class="value-cell">
+                  <h3
+                    @click="toggleRow(currentDocument.id)"
+                    :class="['description-text', { 'is-expanded': isExpanded[currentDocument.id] }]">
+                    {{ currentDocument.notes }}
+                  </h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
@@ -221,6 +247,11 @@ const selectedCategory = computed(() =>
 
 const docNbrFieldLabel = computed(() => selectedCategory.value?.docNbrFieldLabel || 'Doc Nbr');
 const pinNbrFieldLabel = computed(() => selectedCategory.value?.pinNbrFieldLabel || 'Pin Nbr');
+
+const isExpanded = ref({});
+const toggleRow = (id) => {
+  isExpanded.value[id] = !isExpanded.value[id];
+};
 
 function revokePreviews() {
   [frontFullUrl, backFullUrl].forEach((r) => {
@@ -410,10 +441,25 @@ const handleSave = async (formData) => {
   text-align: center;
 }
 .doc-thumb {
-  max-width: 300px;
-  max-height: 300px;
+  max-width: 200px;
+  max-height: 200px;
   object-fit: contain;
   border-radius: 4px;
   cursor: pointer;
+}
+.description-text {
+  cursor: pointer;
+  /* font-size: 1rem; */
+  line-height: 1.4;
+  padding-right: 32px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+.description-text.is-expanded {
+  -webkit-line-clamp: unset;
+  display: block;
 }
 </style>

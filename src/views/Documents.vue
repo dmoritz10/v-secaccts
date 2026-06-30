@@ -82,43 +82,67 @@
           <v-col v-for="account in filteredDocuments" :key="account.id" cols="12">
             <v-card
               elevation="2"
-              class="d-flex align-center pa-2 mx-3"
-              color="amber-lighten-4"
+              class="pa-2 mx-3"
+              color="blue-lighten-4"
+              variant="elevated"
               :id="'account-' + account.id"
               @click="goToAccount(account)">
-              <v-card-title class="text-h6 wrap-card-title">
-                {{ account.name }}
+              <v-card-title class="text-h6 wrap-card-title mb-0 d-flex align-center">
+                <!-- The title text stays on the left -->
+                <span>{{ account.name }}</span>
+                <!-- ms-auto (margin-start: auto) pushes the chip to the far right -->
+                <v-chip
+                  v-if="account.owner"
+                  size="large"
+                  class="ms-auto px-2 font-weight-bold"
+                  :color="account.owner === 'D' ? 'teak' : 'purple'"
+                  variant="tonal">
+                  {{ account.owner }}
+                </v-chip>
               </v-card-title>
-              <v-spacer></v-spacer>
-              <!-- prettier-ignore -->
-
-              <!-- prettier-ignore -->
-              <v-btn
-                icon small flat outlined
-                class="transparent-btn close-btn"
-                @click.stop="documentStore.cycleFavorite(account.id, account.favorite)">
-                <v-icon :color="account.favorite === true ? 'blue' : (account.favorite || undefined)">
-                  {{ account.favorite ? 'mdi-star' : 'mdi-star-outline' }}
-                </v-icon>
-              </v-btn>
-              <v-btn
-                icon
-                small
-                flat
-                outlined
-                class="transparent-btn close-btn"
-                @click.stop="documentStore.openDocumentDialog(account)">
-                <v-icon>mdi-pencil-outline</v-icon>
-              </v-btn>
-              <v-btn
-                v-if="authStore.currUser.admin"
-                icon
-                small
-                outlined
-                class="transparent-btn close-btn"
-                @click.stop="documentStore.deleteDocument(account.id)">
-                <v-icon>mdi-delete-outline</v-icon>
-              </v-btn>
+              <v-card-subtitle v-if="documentStore.selectedAllDocs" class="pt-0 mt-n4">
+                {{ docCategoryStore.docCategoryNameFor(account.docCategoryId) }}
+              </v-card-subtitle>
+              <v-card-subtitle v-if="!documentStore.selectedAllDocs" class="pt-0 mt-n4">
+                {{ account.provider }}
+              </v-card-subtitle>
+              <v-row dense justify="end" no-gutters class="mt-n3">
+                <v-col cols="1">
+                  <v-btn
+                    icon
+                    small
+                    flat
+                    outlined
+                    class="transparent-btn close-btn"
+                    @click.stop="documentStore.cycleFavorite(account.id, account.favorite)">
+                    <v-icon :color="account.favorite === true ? 'blue' : account.favorite || undefined">
+                      {{ account.favorite ? 'mdi-star' : 'mdi-star-outline' }}
+                    </v-icon>
+                  </v-btn>
+                </v-col>
+                <v-col cols="1" class="mx-5">
+                  <v-btn
+                    icon
+                    small
+                    flat
+                    outlined
+                    class="transparent-btn close-btn"
+                    @click.stop="documentStore.openDocumentDialog(account)">
+                    <v-icon>mdi-pencil-outline</v-icon>
+                  </v-btn>
+                </v-col>
+                <v-col cols="1">
+                  <v-btn
+                    v-if="authStore.currUser.admin"
+                    icon
+                    small
+                    outlined
+                    class="transparent-btn close-btn"
+                    @click.stop="documentStore.deleteDocument(account.id)">
+                    <v-icon>mdi-delete-outline</v-icon>
+                  </v-btn>
+                </v-col>
+              </v-row>
             </v-card>
           </v-col>
         </v-row>

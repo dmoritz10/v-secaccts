@@ -27,12 +27,19 @@
                       <v-list-item @click="goToAllAccounts">
                         <v-list-item-title>Show all Accounts</v-list-item-title>
                       </v-list-item>
-                      <v-list-item @click="about">
-                        <v-list-item-title>About</v-list-item-title>
-                      </v-list-item>
-                      <v-divider></v-divider>
+
                       <v-list-item @click="handleSignOut">
                         <v-list-item-title>Sign out</v-list-item-title>
+                      </v-list-item>
+                      <v-divider></v-divider>
+                      <v-list-item>
+                        <v-list-item-title>
+                          <div class="text-caption">
+                            Version: {{ VERSION }}
+                            <br />
+                            {{ BUILD_DATE }}
+                          </div>
+                        </v-list-item-title>
                       </v-list-item>
                     </v-list>
                   </v-menu>

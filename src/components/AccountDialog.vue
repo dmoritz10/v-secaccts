@@ -10,6 +10,23 @@
       </v-card-title>
       <v-card-text>
         <v-form ref="editForm">
+          <v-row dense>
+            <v-col cols="8">
+              <v-select
+                v-model="formData.categoryId"
+                label="Category"
+                autocomplete="off"
+                :items="categoryStore.state.items"
+                item-title="name"
+                item-value="id"
+                variant="outlined"
+                required
+                :rules="[(v) => !!v || 'Category is required']"></v-select>
+            </v-col>
+            <v-col cols="4">
+              <v-select v-model="formData.owner" label="Owner" :items="['D', 'C', '']" variant="outlined"></v-select>
+            </v-col>
+          </v-row>
           <v-text-field
             v-model="formData.provider"
             label="Provider"
@@ -18,16 +35,7 @@
             variant="outlined"
             :rules="[providerExistsRule]"
             required></v-text-field>
-          <v-select
-            v-model="formData.categoryId"
-            label="Category"
-            autocomplete="off"
-            :items="categoryStore.state.items"
-            item-title="name"
-            item-value="id"
-            variant="outlined"
-            required
-            :rules="[(v) => !!v || 'Category is required']"></v-select>
+
           <v-text-field
             v-model="formData.login"
             label="Login"
@@ -40,12 +48,6 @@
             autocomplete="off"
             variant="outlined"
             clearable></v-text-field>
-
-          <!--   -->
-          <!-- :type="showPassword ? 'text' : 'password'" -->
-          <!-- :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'" -->
-          <!-- @click:append-inner="showPassword = !showPassword" -->
-
           <v-text-field
             v-model="formData.accountNbr"
             label="Account Number"

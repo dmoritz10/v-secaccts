@@ -1,8 +1,9 @@
 <template>
   <v-container fluid class="h-100 ma-0 pa-0">
-    <v-container fluid class="ma-0 pa-0" style="height: 100%; overflow: visible">
-      <v-row class="position-sticky top-0 mx-0 px-0 mb-5" style="z-index: 20; background-color: #f9f9f9">
-        <v-col cols="12" class="pb-0 px-0">
+    <v-container fluid class="ma-0 pa-0 d-flex flex-column h-100" style="overflow: visible">
+      <!-- FIXED: Changed from v-row to a standard div block to stop vertical expansion -->
+      <div class="position-sticky top-0 mx-0 px-0 mb-5" style="z-index: 20; background-color: #f9f9f9">
+        <div class="w-100 pb-0 px-0">
           <v-sheet
             class="mx-3 px-4 pt-6 pb-3 mt-1 mb-0 border position-relative"
             style="overflow: visible"
@@ -14,33 +15,36 @@
               </v-col>
             </v-row>
           </v-sheet>
-        </v-col>
-      </v-row>
+        </div>
+      </div>
 
-      <v-row dense class="ma-3 pa-3" style="background-color: #f9f9f9">
-        <v-col>
+      <!-- BUTTON CONTAINER: Now sits tightly right beneath the header -->
+      <div class="d-flex flex-column ga-3 mx-3 pa-3" style="background-color: #f9f9f9">
+        <div>
           <v-btn color="primary" variant="outlined" class="pa-2" @click.stop="openChangePasswordDialog">
             Change password
           </v-btn>
-        </v-col>
-      </v-row>
-      <v-row dense class="ma-3 pa-3" style="background-color: #f9f9f9">
-        <v-col>
-          <v-btn color="primary" variant="outlined" class="pa-2" @click.stop="testBlobRoundtrip">
-            testBlobRoundtrip
-          </v-btn>
-        </v-col>
-      </v-row>
-      <v-row dense class="ma-3 pa-3" style="background-color: #f9f9f9">
-        <v-col>
-          <v-btn color="primary" variant="outlined" class="pa-2" @click.stop="about">About</v-btn>
-        </v-col>
-      </v-row>
+        </div>
+      </div>
+
+      <div class="d-flex flex-column ga-3 mx-3 pa-3" style="background-color: #f9f9f9">
+        <div>
+          <v-btn color="primary" variant="outlined" class="pa-2" @click.stop="handleSignOut">Sign out</v-btn>
+        </div>
+      </div>
+
+      <!-- VERSION BLOCK: Pins to the bottom -->
+      <div class="pa-4 text-center text-grey-darken-1 mt-auto">
+        <div class="text-caption font-weight-medium">The Account Companion</div>
+        <div class="text-caption">
+          Version: {{ VERSION }}
+          <br />
+          {{ BUILD_DATE }}
+        </div>
+      </div>
     </v-container>
 
-    <template>
-      <PasswordChangeDialog ref="pwdDialog" />
-    </template>
+    <PasswordChangeDialog ref="pwdDialog" />
   </v-container>
 </template>
 <script setup>
@@ -85,7 +89,6 @@ const pwdDialog = ref(null);
 function openChangePasswordDialog() {
   pwdDialog.value.open();
 }
-
 // quick manual test, paste into a component or run in browser console
 async function testBlobRoundtrip() {
   const original = new Blob(['hello world test content'], { type: 'text/plain' });

@@ -5,7 +5,7 @@
         <v-col cols="12" class="pb-0 px-0">
           <v-sheet class="mx-3 px-4 pt-3 pb-3 mt-1 mb-0 border" elevation="0" rounded>
             <v-row class="align-center">
-              <v-col cols="1">
+              <v-col cols="2">
                 <v-icon size="32" color="black" style="cursor: pointer" @click="returnToAccounts">
                   mdi-chevron-left
                 </v-icon>
@@ -16,7 +16,16 @@
                 </h2>
               </v-col>
               <!-- Sandwich / 3-dot menu -->
-              <v-col cols="1" class="d-flex justify-end"></v-col>
+              <v-col cols="2" class="d-flex justify-end">
+                <v-chip
+                  v-if="currentAccount?.owner"
+                  size="large"
+                  class="px-2 font-weight-bold"
+                  :color="currentAccount.owner === 'D' ? 'blue' : 'green'"
+                  variant="tonal">
+                  {{ currentAccount.owner }}
+                </v-chip>
+              </v-col>
             </v-row>
           </v-sheet>
         </v-col>
