@@ -18,7 +18,7 @@
                   </v-icon>
                 </v-col>
                 <v-col class="text-center">
-                  <h1 class="subtitle-1 grey--text text-center">
+                  <h1 class="subtitle-1 grey--text text-center" style="white-space: pre-line; line-height: 1.2">
                     {{ accountStore.selectedAllAccts ? 'All Accounts' : categoryName }}
                   </h1>
                 </v-col>
@@ -95,7 +95,9 @@
               color="amber-lighten-4"
               :id="'account-' + account.id"
               @click="goToAccount(account)">
-              <v-card-title class="text-h6 wrap-card-title mb-0 d-flex align-center">
+              <v-card-title
+                class="text-h6 wrap-card-title mb-0 d-flex align-center"
+                style="white-space: pre-line; line-height: 1.2">
                 <!-- The title text stays on the left -->
                 <span>{{ account.provider }}</span>
 
@@ -109,7 +111,7 @@
                   {{ account.owner }}
                 </v-chip>
               </v-card-title>
-              <v-card-subtitle v-if="accountStore.selectedAllAccts" class="pt-0 mt-n4">
+              <v-card-subtitle v-if="accountStore.selectedAllAccts" class="pt-0 mt-n2">
                 {{ categoryStore.categoryNameFor(account.categoryId) }}
               </v-card-subtitle>
               <v-row dense justify="end" no-gutters class="mt-n3">

@@ -5,7 +5,7 @@
       <div class="position-sticky top-0 mx-0 px-0 mb-5" style="z-index: 20; background-color: #f9f9f9">
         <div class="w-100 pb-0 px-0">
           <v-sheet
-            class="mx-3 px-4 pt-6 pb-3 mt-1 mb-0 border position-relative"
+            class="mx-3 px-4 pt-6 pb-3 mt-4 mb-0 border position-relative"
             style="overflow: visible"
             elevation="0"
             rounded>

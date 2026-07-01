@@ -18,7 +18,7 @@
                   </v-icon>
                 </v-col>
                 <v-col class="text-center">
-                  <h1 class="subtitle-1 grey--text text-center">
+                  <h1 style="white-space: pre-line; line-height: 1.2" class="subtitle-1 grey--text text-center">
                     {{ documentStore.selectedAllDocs ? 'All Documents' : documentName }}
                   </h1>
                 </v-col>
@@ -87,7 +87,9 @@
               variant="elevated"
               :id="'account-' + account.id"
               @click="goToAccount(account)">
-              <v-card-title class="text-h6 wrap-card-title mb-0 d-flex align-center">
+              <v-card-title
+                class="text-h6 wrap-card-title mb-0 d-flex align-center"
+                style="white-space: pre-line; line-height: 1.2">
                 <!-- The title text stays on the left -->
                 <span>{{ account.name }}</span>
                 <!-- ms-auto (margin-start: auto) pushes the chip to the far right -->
@@ -100,10 +102,10 @@
                   {{ account.owner }}
                 </v-chip>
               </v-card-title>
-              <v-card-subtitle v-if="documentStore.selectedAllDocs" class="pt-0 mt-n4">
+              <v-card-subtitle v-if="documentStore.selectedAllDocs" class="pt-0 mt-n2">
                 {{ docCategoryStore.docCategoryNameFor(account.docCategoryId) }}
               </v-card-subtitle>
-              <v-card-subtitle v-if="!documentStore.selectedAllDocs" class="pt-0 mt-n4">
+              <v-card-subtitle v-if="!documentStore.selectedAllDocs" class="pt-0 mt-n2">
                 {{ account.provider }}
               </v-card-subtitle>
               <v-row dense justify="end" no-gutters class="mt-n3">
@@ -168,6 +170,7 @@
 
     <!-- Account Dialog -->
     <DocumentDialog
+      v-if="documentStore.dialog"
       v-model="documentStore.dialog"
       :form-data="documentStore.state.formData"
       @save="($event) => handleSave($event)"

@@ -87,7 +87,7 @@
               color="amber-lighten-4"
               :id="`category-${category.id}`"
               @click="goToCategoryAccounts(category.id)">
-              <v-card-title class="text-h6 wrap-card-title">
+              <v-card-title class="text-h6 wrap-card-title" style="white-space: pre-line; line-height: 1">
                 {{ category.name }}
               </v-card-title>
               <v-spacer></v-spacer>

@@ -89,7 +89,7 @@
               variant="elevated"
               :id="`docCategory-${docCategory.id}`"
               @click="goToDocCategoryAccounts(docCategory.id)">
-              <v-card-title class="text-h6 wrap-card-title">
+              <v-card-title class="text-h6 wrap-card-title" style="white-space: pre-line; line-height: 1.2">
                 {{ docCategory.name }}
               </v-card-title>
               <v-spacer></v-spacer>

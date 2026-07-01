@@ -11,7 +11,7 @@
                 </v-icon>
               </v-col>
               <v-col class="text-center">
-                <h2 class="subtitle-1 grey--text text-center">
+                <h2 style="white-space: pre-line; line-height: 1.2" class="subtitle-1 grey--text text-center">
                   {{ currentAccount?.provider }}
                 </h2>
               </v-col>
@@ -45,7 +45,9 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(categoryNameFor(currentAccount?.categoryId) || 'N/A', 'Category')"></v-icon>
+                    @click="
+                      copyToClipboard(categoryStore.categoryNameFor(currentAccount?.categoryId) || 'N/A', 'Category')
+                    "></v-icon>
                 </td>
               </tr>
               <tr>
@@ -122,14 +124,7 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="
-                      copyToClipboard(
-                        currentAccount?.loginUrl && currentAccount?.loginUrl.length > 30
-                          ? currentAccount?.loginUrl.slice(0, 30) + '...'
-                          : currentAccount?.loginUrl || 'N/A',
-                        'Login URL'
-                      )
-                    "></v-icon>
+                    @click="copyToClipboard(currentAccount?.loginUrl || 'N/A', 'Login URL')"></v-icon>
                 </td>
               </tr>
               <tr v-if="currentAccount?.autoPay">
@@ -145,7 +140,7 @@
                 </td>
               </tr>
               <tr v-if="currentAccount?.pinNbr">
-                <td class="text-green-darken-3 font-weight-bold">PIN Number</td>
+                <td class="text-green-darken-3 font-weight-bold">Pin Number</td>
                 <td>
                   <h3>{{ currentAccount?.pinNbr }}</h3>
                 </td>
@@ -153,13 +148,13 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.pinNbr, 'PIN Number')"></v-icon>
+                    @click="copyToClipboard(currentAccount?.pinNbr, 'Pin Number')"></v-icon>
                 </td>
               </tr>
               <tr v-if="currentAccount?.securityQA">
                 <td class="text-green-darken-3 font-weight-bold">Security Q&A</td>
                 <td>
-                  <h3>{{ currentAccount?.securityQA }}</h3>
+                  <h3 style="white-space: pre-line">{{ currentAccount?.securityQA }}</h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
@@ -171,7 +166,7 @@
               <tr v-if="currentAccount?.notes">
                 <td class="text-green-darken-3 font-weight-bold">Notes</td>
                 <td>
-                  <h3>{{ currentAccount?.notes }}</h3>
+                  <h3 style="white-space: pre-line">{{ currentAccount?.notes }}</h3>
                 </td>
                 <td class="icon-cell">
                   <v-icon
@@ -201,7 +196,7 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentAccount?.dateAdd, 'Last Change')"></v-icon>
+                    @click="copyToClipboard(currentAccount?.dateAdd, 'Date Add')"></v-icon>
                 </td>
               </tr>
             </tbody>

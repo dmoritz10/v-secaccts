@@ -5,16 +5,21 @@
     </v-main>
     <UiContainer />
 
-    <v-bottom-navigation v-if="showBottomNav" :model-value="activeTab" grow color="primary">
-      <v-btn value="accounts" @click="selectTab('categories')">
+    <v-bottom-navigation v-if="showBottomNav" v-model="activeTab" grow color="primary">
+      <!-- Changed value to match 'categories' -->
+      <v-btn value="categories" @click="selectTab('categories')">
         <v-icon>mdi-shield-lock-outline</v-icon>
         <span>Accounts</span>
       </v-btn>
-      <v-btn value="documents" @click="selectTab('docCategories')">
+
+      <!-- Changed value to match 'docCategories' -->
+      <v-btn value="docCategories" @click="selectTab('docCategories')">
         <v-icon>mdi-file-account-outline</v-icon>
         <span>Documents</span>
       </v-btn>
-      <v-btn value="setings" @click="selectTab('settings')">
+
+      <!-- Fixed typo 'setings' -> 'settings' to match your method parameter -->
+      <v-btn value="settings" @click="selectTab('settings')">
         <v-icon>mdi-cog-outline</v-icon>
         <span>Settings</span>
       </v-btn>

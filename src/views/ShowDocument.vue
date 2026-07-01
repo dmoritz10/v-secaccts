@@ -11,7 +11,7 @@
                 </v-icon>
               </v-col>
               <v-col class="text-center">
-                <h2 class="subtitle-1 grey--text text-center">
+                <h2 style="white-space: pre-line; line-height: 1.2" class="subtitle-1 grey--text text-center">
                   {{ currentDocument?.name }}
                 </h2>
               </v-col>
@@ -60,7 +60,7 @@
                   <v-icon
                     size="small"
                     icon="mdi-content-copy"
-                    @click="copyToClipboard(currentDocument?.docNbr, 'Doc Nbr')"></v-icon>
+                    @click="copyToClipboard(currentDocument?.provider, 'Provider')"></v-icon>
                 </td>
               </tr>
 
@@ -117,6 +117,7 @@
                 <td class="text-green-darken-3 font-weight-bold">Notes</td>
                 <td class="value-cell">
                   <h3
+                    style="white-space: pre-line"
                     @click="toggleRow(currentDocument.id)"
                     :class="['description-text', { 'is-expanded': isExpanded[currentDocument.id] }]">
                     {{ currentDocument.notes }}
@@ -132,7 +133,7 @@
               <tr v-if="currentDocument?.frontPath">
                 <td class="text-green-darken-3 font-weight-bold">Front</td>
                 <td>
-                  <div class="preview-wrapper">
+                  <div class="preview-wrapper my-3">
                     <img :src="frontPreviewUrl" class="doc-thumb" @click="viewFile(frontFullUrl)" />
                     <v-chip v-if="currentDocument.frontType === 'application/pdf'" size="x-small" class="pdf-badge">
                       PDF
@@ -147,7 +148,7 @@
               <tr v-if="currentDocument?.backPath">
                 <td class="text-green-darken-3 font-weight-bold">Back</td>
                 <td>
-                  <div class="preview-wrapper">
+                  <div class="preview-wrapper my-3">
                     <img :src="backPreviewUrl" class="doc-thumb" @click="viewFile(backFullUrl)" />
                     <v-chip v-if="currentDocument.backType === 'application/pdf'" size="x-small" class="pdf-badge">
                       PDF
