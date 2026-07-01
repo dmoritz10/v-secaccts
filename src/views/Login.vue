@@ -179,7 +179,7 @@ async function submit() {
     return;
   }
 
-  pwd.value = 'Star123#';
+  // pwd.value = 'Star123#';
   var key = await verifyPassword(pwd.value, vault);
 
   pwd.value = null;
