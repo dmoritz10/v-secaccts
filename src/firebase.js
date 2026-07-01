@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
@@ -14,6 +15,21 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
+// App Check must be initialized before other services
+if (typeof window !== 'undefined') {
+  if (import.meta.env.DEV) {
+    console.log('App Check debug token:', import.meta.env.VITE_APPCHECK_DEBUG_TOKEN);
+    // Debug token for local development only — never ships to production
+    self.FIREBASE_APPCHECK_DEBUG_TOKEN = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN;
+  }
+
+  initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider('6LcGBEAtAAAAABnsoIecw1-Zk_hYwk0ERC2-yqjt'),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
+
 const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();

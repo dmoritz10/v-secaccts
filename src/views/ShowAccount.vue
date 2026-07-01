@@ -19,9 +19,9 @@
               <v-col cols="2" class="d-flex justify-end">
                 <v-chip
                   v-if="currentAccount?.owner"
-                  size="large"
-                  class="px-2 font-weight-bold"
-                  :color="currentAccount.owner === 'D' ? 'blue' : 'green'"
+                  class="ms-auto pa-0 ma-0 font-weight-bold d-inline-flex align-center justify-center"
+                  style="width: 32px; height: 32px; min-width: 32px; border-radius: 50%"
+                  :color="currentAccount.owner === 'D' ? 'blue' : 'purple'"
                   variant="tonal">
                   {{ currentAccount.owner }}
                 </v-chip>
@@ -113,8 +113,8 @@
                     class="text-decoration-none text-primary">
                     <h3>
                       {{
-                        currentAccount?.loginUrl && currentAccount?.loginUrl.length > 30
-                          ? currentAccount?.loginUrl.slice(0, 25) + '...'
+                        currentAccount?.loginUrl && currentAccount?.loginUrl.length > 20
+                          ? currentAccount?.loginUrl.slice(0, 20) + '...'
                           : currentAccount?.loginUrl
                       }}
                     </h3>
@@ -144,6 +144,7 @@
                 <td>
                   <h3>{{ currentAccount?.pinNbr }}</h3>
                 </td>
+
                 <td class="icon-cell">
                   <v-icon
                     size="small"
@@ -153,9 +154,16 @@
               </tr>
               <tr v-if="currentAccount?.securityQA">
                 <td class="text-green-darken-3 font-weight-bold">Security Q&A</td>
-                <td>
-                  <h3 style="white-space: pre-line">{{ currentAccount?.securityQA }}</h3>
+
+                <td class="value-cell">
+                  <h3
+                    style="white-space: pre-line"
+                    @click="toggleRow(currentAccount.id)"
+                    :class="['description-text', { 'is-expanded': isExpanded[currentAccount.id] }]">
+                    {{ currentAccount.securityQA }}
+                  </h3>
                 </td>
+
                 <td class="icon-cell">
                   <v-icon
                     size="small"
@@ -165,9 +173,16 @@
               </tr>
               <tr v-if="currentAccount?.notes">
                 <td class="text-green-darken-3 font-weight-bold">Notes</td>
-                <td>
-                  <h3 style="white-space: pre-line">{{ currentAccount?.notes }}</h3>
+
+                <td class="value-cell">
+                  <h3
+                    style="white-space: pre-line"
+                    @click="toggleRow(currentAccount.id)"
+                    :class="['description-text', { 'is-expanded': isExpanded[currentAccount.id] }]">
+                    {{ currentAccount.notes }}
+                  </h3>
                 </td>
+
                 <td class="icon-cell">
                   <v-icon
                     size="small"
@@ -254,6 +269,11 @@ const currentAccount = computed(() => {
   const rtn = acct ? { ...acct } : null; // shallow clone breaks reference
   return rtn;
 });
+
+const isExpanded = ref({});
+const toggleRow = (id) => {
+  isExpanded.value[id] = !isExpanded.value[id];
+};
 
 watch(
   currentAccount,
@@ -392,5 +412,20 @@ const handleSave = async (formData) => {
 .compressed-table :deep(.icon-cell) {
   width: 48px; /* Fixed width for copy icon */
   text-align: center;
+}
+.description-text {
+  cursor: pointer;
+  /* font-size: 1rem; */
+  line-height: 1.4;
+  padding-right: 32px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+}
+
+.description-text.is-expanded {
+  -webkit-line-clamp: unset;
+  display: block;
 }
 </style>

@@ -110,16 +110,22 @@ const providerExistsRule = computed(() => {
     const normalized = value.trim().toLowerCase();
 
     // Check against existing providers
-    const exists = accountStore.state.items.some(
+    const providerExists = accountStore.state.items.some(
       (item) =>
         item.provider.trim().toLowerCase() === normalized &&
         // If editing, ignore the same account
         item.id !== props.formData.accountId
     );
-    console.log('exists', props.formData, props.formData.accountId);
-    if (exists) {
-      return 'This provider already exists';
-    }
+
+    const ownerTheSame = accountStore.state.items.some(
+      (item) =>
+        item.provider.trim().toLowerCase() === normalized &&
+        item.id !== props.formData.accountId &&
+        item.owner == props.formData.owner
+    );
+
+    if (providerExists && ownerTheSame) return 'This Document name already exists';
+
     return true;
   };
 });

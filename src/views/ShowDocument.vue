@@ -19,9 +19,9 @@
               <v-col cols="2" class="d-flex justify-end">
                 <v-chip
                   v-if="currentDocument.owner"
-                  size="large"
-                  class="px-2 font-weight-bold"
-                  :color="currentDocument.owner === 'D' ? 'blue' : 'green'"
+                  class="ms-auto pa-0 ma-0 font-weight-bold d-inline-flex align-center justify-center"
+                  style="width: 32px; height: 32px; min-width: 32px; border-radius: 50%"
+                  :color="currentDocument.owner === 'D' ? 'blue' : 'purple'"
                   variant="tonal">
                   {{ currentDocument.owner }}
                 </v-chip>
@@ -201,6 +201,7 @@
       <!-- Update Dialog -->
       <!-- Account Dialog -->
       <DocumentDialog
+        v-if="documentStore.dialog"
         v-model="documentStore.dialog"
         :form-data="documentStore.state.formData"
         @save="($event) => handleSave($event)"

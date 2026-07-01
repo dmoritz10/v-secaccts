@@ -95,9 +95,9 @@
                 <!-- ms-auto (margin-start: auto) pushes the chip to the far right -->
                 <v-chip
                   v-if="account.owner"
-                  size="large"
-                  class="ms-auto px-2 font-weight-bold"
-                  :color="account.owner === 'D' ? 'teak' : 'purple'"
+                  class="ms-auto pa-0 ma-0 font-weight-bold d-inline-flex align-center justify-center"
+                  style="width: 32px; height: 32px; min-width: 32px; border-radius: 50%"
+                  :color="account.owner === 'D' ? 'blue' : 'purple'"
                   variant="tonal">
                   {{ account.owner }}
                 </v-chip>

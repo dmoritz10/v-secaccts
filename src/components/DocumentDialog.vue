@@ -299,10 +299,18 @@ const nameExistsRule = computed(() => {
   return (value) => {
     if (!value) return 'Document Name is required';
     const normalized = value.trim().toLowerCase();
-    const exists = documentStore.state.items.some(
+    const nameExists = documentStore.state.items.some(
       (item) => item.name.trim().toLowerCase() === normalized && item.id !== props.formData.documentId
     );
-    if (exists) return 'This Document name already exists';
+    const ownerTheSame = documentStore.state.items.some(
+      (item) =>
+        item.name.trim().toLowerCase() === normalized &&
+        item.id !== props.formData.documentId &&
+        item.owner == props.formData.owner
+    );
+
+    if (nameExists && ownerTheSame) return 'This Document name already exists';
+
     return true;
   };
 });

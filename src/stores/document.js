@@ -380,6 +380,7 @@ export const useDocumentStore = defineStore('document', () => {
     if (state.formData?.backPreviewUrl?.startsWith('blob:')) {
       URL.revokeObjectURL(state.formData.backPreviewUrl);
     }
+    state.formData = {};
     dialog.value = false;
   };
 

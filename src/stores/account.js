@@ -295,6 +295,7 @@ export const useAccountStore = defineStore('account', () => {
   };
 
   const closeAccountDialog = () => {
+    state.formData = {};
     dialog.value = false;
   };
 
